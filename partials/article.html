@@ -1,0 +1,46 @@
+<div class="knowledge-body__container-item--article">
+    <div class="knowledge-body__article-outer" data-slide="article">
+        <div class="knowledge-body__article">
+            <div class="article__navigation">
+                <div class="article__back" data-slide="back">
+                    <svg class="sx_label_icon sx_svg_icon">
+                        <use xlink:href="#sx_icon_chevron-left"></use>
+                    </svg>
+                    <p class="article__nav-text">Back</p>
+                </div>
+                <div class="article__forward">
+                    <p class="article__nav-text">Forward</p>
+                    <svg class="sx_label_icon sx_svg_icon">
+                        <use xlink:href="#sx_icon_chevron-right"></use>
+                    </svg>
+                </div>
+            </div>
+            <div class="article__content">
+                <p class="article__question-heading">{{ArticlePlaceholder}}</p>
+                <h2 class="article__question" data-article-heading>{{ArticleHeading}}</h2>
+                <div class="article__body" data-article-body>{{ArticleContent}}</div>
+            </div>
+            <div class="article__feedback open" data-feedback="container">
+                <p class="article__feedback-question">{{ArticleFeedbackHeading}}</p>
+                <div class="article__thumbs">
+                    <div class="article__thumb" data-feedack="positive" data-accordion-control="1" data-accordion-set="feedback" data-accordion-ind="set">
+                        <p class="article__thumb-text">Yes</p>
+
+                    </div>
+
+                    <div class="article__thumb" data-feedback="negative" data-accordion-control="2" data-accordion-set="feedback" data-accordion-ind="set">
+                        <p class="article__thumb-text">No</p>
+                    </div>
+                </div>
+                <div class="article__feedback--pos-cont closed" data-review="positive" data-accordion-element="1" data-accordion-set="feedback" data-accordion-ind="set">
+                    <p class="article__feedback--pos">Thank you for your feedback</p>
+                </div>
+                <div class="article__feedback--neg closed" data-review="negative" data-accordion-element="2" data-accordion-set="feedback" data-accordion-ind="set">
+                    <p class="feedback__title">Please tell us how we can improve this FAQ</p>
+                    <textarea class="feedback__message"></textarea>
+                    <div class="feedback__send iconless-button">Send feedback</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
