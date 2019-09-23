@@ -164,7 +164,18 @@
                 throw new Error('DOM elemenet needs to be specified.')
             }
 
-            var components = Component.store('components');
+            var fragments  = doc.createDocumentFragment(),
+                components = Component.store('components');
+
+            var searchComponent     = Component.get('search-componet', components);
+            var searchComponentFrag = Component.transform(
+                Component.parse(searchComponent, [{
+                    name: 'Heading',
+                    value: 'This is a test'
+                }])
+            );
+
+            fragments.appendChild(searchComponentFrag);
 
             var categoryWrapper     = Component.get('category-wrapper-componet', components);
             var categoryWrapperFrag = Component.transform(
@@ -174,9 +185,19 @@
                 }])
             );
 
-            console.log(categoryWrapperFrag);
+            fragments.appendChild(categoryWrapperFrag);
 
-            elem.appendChild(categoryWrapperFrag);
+            var articleListWrapper     = Component.get('article-list-wrapper-componet', components);
+            var articleListWrapperFrag = Component.transform(
+                Component.parse(articleListWrapper, [{
+                    name: 'Heading',
+                    value: 'Popular questions'
+                }])
+            );
+
+            fragments.appendChild(articleListWrapperFrag);
+
+            return elem.appendChild(fragments);
         };
 
         var categories = function (items, elem) {
