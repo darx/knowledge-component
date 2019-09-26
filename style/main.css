@@ -1,3 +1,11 @@
+.synthetix-iso {
+    font-size: 16px;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    line-height: 1.428571429;
+    color: black;
+    background-color: white;
+}
+
 .synthetix-iso *,
 .synthetix-iso *::after,
 .synthetix-iso *::before {
@@ -9,3 +17,249 @@
     -webkit-font-smoothing: antialiased;
 }
 
+.synthetix-iso address,
+.synthetix-iso blockquote,
+.synthetix-iso dd,
+.synthetix-iso div,
+.synthetix-iso dl,
+.synthetix-iso dt,
+.synthetix-iso fieldset,
+.synthetix-iso form,
+.synthetix-iso frame,
+.synthetix-iso frameset,
+.synthetix-iso h1,
+.synthetix-iso h2,
+.synthetix-iso h3,
+.synthetix-iso h4,
+.synthetix-iso h5,
+.synthetix-iso h6,
+.synthetix-iso noframes,
+.synthetix-iso ol,
+.synthetix-iso p,
+.synthetix-iso ul,
+.synthetix-iso center,
+.synthetix-iso dir,
+.synthetix-iso hr,
+.synthetix-iso menu,
+.synthetix-iso pre {
+    display: block;
+    unicode-bidi: embed;
+}
+
+.synthetix-iso li {
+    display: list-item;
+}
+
+.synthetix-iso table {
+    display: table;
+}
+
+.synthetix-iso tr {
+    display: table-row;
+}
+
+.synthetix-iso thead {
+    display: table-header-group;
+}
+
+.synthetix-iso tbody {
+    display: table-row-group;
+}
+
+.synthetix-iso tfoot {
+    display: table-footer-group;
+}
+
+.synthetix-iso col {
+    display: table-column;
+}
+
+.synthetix-iso colgroup {
+    display: table-column-group;
+}
+
+.synthetix-iso td,
+.synthetix-iso th {
+    display: table-cell;
+}
+
+.synthetix-iso caption {
+    display: table-caption;
+}
+
+.synthetix-iso th {
+    font-weight: bolder;
+    text-align: center;
+}
+
+.synthetix-iso caption {
+    text-align: center;
+}
+
+.synthetix-iso h1 {
+    font-size: 2em;
+    margin: .67em 0;
+}
+
+.synthetix-iso h2 {
+    font-size: 1.5em;
+    margin: .75em 0;
+}
+
+.synthetix-iso h3 {
+    font-size: 1.17em;
+    margin: .83em 0;
+}
+
+.synthetix-iso h4,
+.synthetix-iso p,
+.synthetix-iso blockquote,
+.synthetix-iso ul,
+.synthetix-iso fieldset,
+.synthetix-iso form,
+.synthetix-iso ol,
+.synthetix-iso dl,
+.synthetix-iso dir,
+.synthetix-iso menu {
+    margin: 1.12em 0;
+}
+
+.synthetix-iso h5 {
+    font-size: .83em;
+    margin: 1.5em 0;
+}
+
+.synthetix-iso h6 {
+    font-size: .75em;
+    margin: 1.67em 0;
+}
+
+.synthetix-iso h1,
+.synthetix-iso h2,
+.synthetix-iso h3,
+.synthetix-iso h4,
+.synthetix-iso h5,
+.synthetix-iso h6,
+.synthetix-iso b,
+.synthetix-iso strong {
+    font-weight: bolder;
+}
+
+.synthetix-iso blockquote {
+    margin-left: 40px;
+    margin-right: 40px;
+}
+
+.synthetix-iso i,
+.synthetix-iso cite,
+.synthetix-iso em,
+.synthetix-iso var,
+.synthetix-iso address {
+    font-style: italic;
+}
+
+.synthetix-iso pre,
+.synthetix-iso tt,
+.synthetix-iso code,
+.synthetix-iso kbd,
+.synthetix-iso samp {
+    font-family: monospace;
+}
+
+.synthetix-iso pre {
+    white-space: pre;
+}
+
+.synthetix-iso button,
+.synthetix-iso textarea,
+.synthetix-iso input,
+.synthetix-iso select {
+    display: inline-block;
+}
+
+.synthetix-iso big {
+    font-size: 1.17em;
+}
+
+.synthetix-iso small,
+.synthetix-iso sub,
+.synthetix-iso sup {
+    font-size: .83em;
+}
+
+.synthetix-iso sub {
+    vertical-align: sub;
+}
+
+.synthetix-iso sup {
+    vertical-align: super;
+}
+
+.synthetix-iso table {
+    border-spacing: 2px;
+}
+
+.synthetix-iso thead,
+.synthetix-iso tbody,
+.synthetix-iso tfoot {
+    vertical-align: middle;
+}
+
+.synthetix-iso td,
+.synthetix-iso th,
+.synthetix-iso tr {
+    vertical-align: inherit;
+}
+
+.synthetix-iso s,
+.synthetix-iso strike,
+.synthetix-iso del {
+    text-decoration: line-through;
+}
+
+.synthetix-iso hr {
+    border: 1px inset;
+}
+
+.synthetix-iso ol,
+.synthetix-iso ul,
+.synthetix-iso dir,
+.synthetix-iso menu,
+.synthetix-iso dd {
+    margin-left: 40px;
+}
+
+.synthetix-iso ol {
+    list-style-type: decimal;
+}
+
+.synthetix-iso ol ul,
+.synthetix-iso ul ol,
+.synthetix-iso ul ul,
+.synthetix-iso ol ol {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+.synthetix-iso u,
+.synthetix-iso ins {
+    text-decoration: underline;
+}
+
+.synthetix-iso br:before {
+    content: "\A";
+    white-space: pre-line;
+}
+
+.synthetix-iso center {
+    text-align: center
+}
+
+.synthetix-iso :link,
+.synthetix-iso :visited {
+    text-decoration: underline;
+}
+
+.synthetix-iso :focus {
+    outline: thin dotted invert;
+}

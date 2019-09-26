@@ -2,9 +2,10 @@
   "name": "knowledge-component",
   "version": "1.0.0",
   "description": "Dynamic embeddable Synthetix knowledge component",
-  "main": "index.js",
+  "main": "src/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "production": "gulp build",
+    "development": "gulp build-development"
   },
   "repository": {
     "type": "git",
@@ -26,10 +27,18 @@
   },
   "homepage": "https://github.com/darx/knowledge-component#readme",
   "dependencies": {
+    "@babel/polyfill": "^7.6.0",
     "gulp": "^4.0.2",
     "gulp-concat": "^2.6.1",
     "gulp-file": "^0.4.0",
     "gulp-htmlmin": "^5.0.1",
-    "gulp-rename": "^1.4.0"
+    "gulp-rename": "^1.4.0",
+    "gulp-uglify": "^3.0.2",
+    "website-scraper": "^4.2.0"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.6.0",
+    "@babel/core": "^7.6.0",
+    "@babel/preset-env": "^7.6.0"
   }
 }
