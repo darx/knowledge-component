@@ -6,10 +6,15 @@ const concat  = require('gulp-concat');
 const uglify  = require('gulp-uglify');
 const htmlmin = require('gulp-htmlmin');
 const scrape  = require('website-scraper');
+const prefix  = require('gulp-autoprefixer');
 
 gulp.task('partials', async () => {
     return fs.readdirAsync('./partials').then(async (filenames) => {
-        let componets = await Promise.all(filenames.map(getFile));
+        let actions = filenames.map(async (file) => {
+            return getFile('./partials/', file);
+        });
+
+        let componets = await Promise.all(actions);
 
         return { data: componets, names: filenames };
     })
@@ -44,7 +49,11 @@ gulp.task('partials', async () => {
 
 gulp.task('partials-dev', async () => {
     return fs.readdirAsync('./partials').then(async (filenames) => {
-        let componets = await Promise.all(filenames.map(getFile));
+        let actions = filenames.map(async (file) => {
+            return getFile('./partials/', file);
+        });
+
+        let componets = await Promise.all(actions);
 
         return { data: componets, names: filenames };
     })
@@ -72,6 +81,50 @@ gulp.task('partials-dev', async () => {
     });
 });
 
+gulp.task('svg-dev', async () => {
+
+    return fs.readdirAsync('./icons').then(async (filenames) => {
+        var actions = filenames.map(async (file) => {
+            return getFile('./icons/', file);
+        });
+
+        var components = await Promise.all(actions);
+
+        return { data: components, names: filenames };
+    })
+
+    .then((files) => {
+
+        var snippets = files.data.map((file, i) => {
+            let name = files.names[i].split(/\./)[0];
+
+            let prepend = `<svg 
+                            version="1.1"
+                            xmlns="http://www.w3.org/2000/svg"
+                            xmlns:xlink="http://www.w3.org/1999/xlink">
+                            <defs>`,
+                append = `</defs></svg>`;
+
+                file = file
+                    .replace('<svg ', `<symbol id="sx_${name}_icon" `)
+                    .replace('</svg>', '</symbol>');
+
+            
+            return prepend + file + append;
+        });
+
+        let string = `<div style="display:none!important;">${snippets.join('')}</div>\n`;
+    
+        return file('icons', string, {
+            src: true
+        })
+
+        .pipe(rename('icons.html'))
+        .pipe(gulp.dest('dist/src'));
+    });
+
+});
+
 gulp.task('compress', () => {
     return gulp.src('./src/index.js')
         .pipe(uglify())
@@ -88,6 +141,7 @@ gulp.task('compress-dev', () => {
 
 gulp.task('styles', () => {
     return gulp.src('./style/*.css')
+        .pipe(prefix())
         .pipe(gulp.dest('dist/src'));
 });
 
@@ -124,7 +178,8 @@ gulp.task('build-development',
         'clean:dist',
         'partials-dev',
         'compress-dev',
-        'styles'
+        'styles',
+        'svg-dev'
     )
 );
 
@@ -160,8 +215,8 @@ const clean = async () => {
     return deleteFolderRecursive('./dist');
 }
 
-const getFile = (filename) => {
-    return fs.readFileAsync('./partials/' + filename, 'utf8');
+const getFile = (dir, filename) => {
+    return fs.readFileAsync(dir + filename, 'utf8');
 };
 
 const deleteFolderRecursive = (path) => {

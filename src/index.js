@@ -4,7 +4,25 @@
         return console.warn('Unable to find synthetix object, exiting installation.');
     }
 
+    var Wrapper = undefined;
+
+    function Loading (state) {
+        if (!state) {
+            return doc.documentElement.removeClass('synthetix-loading');
+        }
+        doc.documentElement.addClass('synthetix-loading');
+    }
+
+    function Container (state) {
+        var Container = el('[data-slide]', Wrapper);
+        if (Container) {
+            Container.dataset.slide = state;
+        }
+    }
+
     var Get = function (Request, Session) {
+
+        var store = {};
 
         var categories = function (cb) {
 
@@ -32,10 +50,18 @@
                 throw new Error('Get.article `label` @param must be a string; not ' + typeof label + '. e.g. qed00006');
             }
 
+            if (!store.article) {
+                store.article = {};
+            }
+
+            else if (store.article[Label] && 'function' === typeof cb) {
+                cb(store.article[Label]);
+            }
+
             var rqt = {
                 label: Label,
                 userid: Session,
-                origin_url: win.location.href.replace(win.location.hash, ''),
+                origin_url: url(),
                 channel: 14,
             };
 
@@ -44,14 +70,19 @@
                 url: syn.environment + 'external/article',
                 data: rqt,
                 headers: { 'Content-Type': 'application/json' },
-                success: typeof cb === 'function' ? cb : console.log,
+                success: function (res) {
+                    if ('function' === typeof cb) {
+                        store.article[Label] = res;
+                        cb(res);
+                    }
+                },
             };
 
             Request(params);
 
         };
 
-        var search = function (Query, cb, suggest) {
+        var search = function (Query, cb, Suggest, Topic) {
 
             /**
              * @name Get.search
@@ -61,19 +92,22 @@
                 throw new Error();
             }
 
-            if ('boolean' !== typeof suggest) { suggest = true; }
+            if ('boolean' !== typeof Suggest) { suggest = true; }
+
+            if ('string' !== typeof Topic) { Topic = 'All'; }
 
             var params = {
                 method: 'POST',
                 url: syn.environment + 'external/search',
                 data: {
-                    autosuggest: suggest,
+                    autosuggest: Suggest,
                     channel: 14,
                     count: 6,
                     index: 0,
-                    origin_url: win.location.href.replace(win.location.hash, ''),
+                    origin_url: url(),
                     query: Query,
-                    userid: Session
+                    userid: Session,
+                    category: Topic,
                 },
                 headers: { 'Content-Type': 'application/json' },
                 success: function (res) {
@@ -91,21 +125,6 @@
 
         };
 
-        var views = function (cb) {
-
-            /**
-             * @name Get.views
-             **/
-
-            var params = {
-                method: 'GET',
-                url: syn.environment + 'external/views',
-                success: typeof cb === 'function' ? cb : console.log,
-            };
-
-            Request(params);
-        };
-
         var popular = function (dataObject, cb) {
 
             /**
@@ -116,11 +135,30 @@
                 throw new Error('Get.popular `dataObject` @param must be an object; not ' + typeof dataObject);
             }
 
+            var name = !dataObject.category 
+                ? 'all' 
+                : dataObject.category;
+
+            if (!store.popular && 'function' === typeof cb) {
+                store.popular = {};
+            }
+
+            else if (store.popular[name]) {
+                // Network request doesn't need 
+                // to be sent for repeated clicks
+                return cb(store.popular[name]);
+            }
+
             var params = {
                 method: 'GET',
                 url: syn.environment + 'external/all_faqs',
                 data: dataObject,
-                success: typeof cb === 'function' ? cb : console.log,
+                success: function (res) {
+                    if ('function' === typeof cb) {
+                        store.popular[name] = res;
+                        cb(res);
+                    }
+                }
             };
 
             Request(params);
@@ -143,10 +181,24 @@
 
         };
 
+        var SynthetixRequest = Request;
+        Request = function (options) {
+            if ('function' === typeof options.success) {
+                Loading(true);
+
+                var Response = options.success;
+                options.success = function () {
+                    Loading(false);
+                    return Response.apply(null, arguments);
+                }
+            }
+            
+            return SynthetixRequest.apply(null, arguments);
+        };
+
         return {
             categories: categories,
             article: article,
-            views: views,
             popular: popular,
             resource: resource,
             search: search
@@ -259,7 +311,7 @@
             return $string;
         };
 
-        var url = function (url, elem) {
+        var url = function (url, run) {
 
             /**
              * @name Parse.url
@@ -288,6 +340,8 @@
 
             if (!value) { return false; }
 
+            if (!run) { return { name: key, value: value }; }
+
             switch (key) {
                 case 'article':
                     Get.article(value, function (res) {
@@ -306,7 +360,7 @@
                         category: value
                     }, function (res) {
                         Render.popular(res.items,
-                            el('[data-top-knowledge-list]'), elem);
+                            el('[data-top-knowledge-list]'), Wrapper);
                     });
                 break;
             }
@@ -374,7 +428,10 @@
                     }])
                 );
 
+                var SearchWrapper = el('[data-knowledge-search-actions]', searchFrag);
+
                 var SearchForm = el('form', searchFrag);
+                var FilterBtn  = el('.filter-bar__menu-btn', searchFrag);
                 
                 on(SearchForm, 'submit', function (e) {
                     e.preventDefault();
@@ -382,15 +439,17 @@
                     var Form  = this,
                         Query = Form.query.value.trim();
 
-                    if (!Query) { return; }
+                    if (!Query) { console.log('test'); return Container('questions'); }
 
-                    var params = [Query, function () {
+                    var params = [Query, function (res) {
                         history.pushState({ }, null,
                         '#!/synthetix/knowledge/component/search/' + 
                             Query.toLowerCase()
                             .replace(/[^\w\s]/gi, '')
                             .replace(/ /g, '-')
                         );
+
+                        Render.search(res);
                     }];
 
                     if (e.isTrusted) { params.push(false); }
@@ -402,9 +461,7 @@
 
                 on(SearchForm.query, 'keyup', function (e) {
 
-                    if ([13].indexOf(e.which) !== -1) { return; }
-
-                    console.log(e.which);
+                    if ([9, 13].indexOf(e.which) !== -1) { return; }
 
                     var Form = this.form;
 
@@ -418,6 +475,16 @@
                         action.initEvent('submit', false, true);
                         Form.dispatchEvent(action);
                     }, 500);
+                });
+
+                on(FilterBtn, 'click', function () {
+                    var wrapper = SearchWrapper;
+
+                    wrapper.dataset.knowledgeSearchActions = 
+                        !wrapper.dataset.knowledgeSearchActions || 
+                        wrapper.dataset.knowledgeSearchActions != 'filter' 
+                            ? 'filter'
+                            : '';
                 });
 
                 fragment.appendChild(searchFrag);
@@ -459,34 +526,6 @@
 
         }();
 
-        var placeholders = function (elem) {
-
-            /**
-             * @name Render.placeholders
-             **/
-
-            if (!elem instanceof Element) {
-                throw new Error('DOM elemenet needs to be specified.');
-            }
-
-            var fragments  = doc.createDocumentFragment();
-
-            // Search component
-
-            fragments.appendChild(placeholder.search());
-
-            // Categories component
-
-            fragments.appendChild(placeholder.category());
-
-            // Article component
-
-            fragments.appendChild(placeholder.article());
-
-
-            return elem.appendChild(fragments);
-        };
-
         var template = function (elem) {
 
             var fragment   = doc.createDocumentFragment(),
@@ -521,6 +560,14 @@
              * @name Render.styles
              **/
 
+            var load = doc.createElement('style');
+                load.id = 'synthetix-loading-style';
+                load.innerHTML = '.synthetix-loading *{cursor: wait;}';
+
+            doc.body.appendChild(load);
+
+            Loading(true);
+
             Get.resource('src/main.css', function (res) {
                 var style = doc.createElement('style');
                 style.innerHTML = res;
@@ -542,8 +589,8 @@
                 throw new Error('Something has went wrong with rendering category items.');
             }
 
-            if (!elem instanceof Element) {
-                throw new Error('DOM elemenet not passed, please specify Element.');
+            if (!(elem instanceof Element)) { 
+                elem = el('[data-knowledge-categories]', Wrapper);
             }
 
             var fragments = doc.createDocumentFragment();
@@ -560,6 +607,13 @@
                     }, {
                         name: 'NameEncoded',
                         value: encodeURIComponent(item.category)
+                    }, {
+                        name: 'NameClass',
+                        value: item.category
+                            .trim()
+                            .toLowerCase()
+                            .replace(/[^\w\s]/gi, '')
+                            .replace(/ /g, '_')
                     }]
                 );
                 
@@ -570,6 +624,81 @@
 
             return elem.appendChild(fragments);
         };
+
+        var filters = function (items, elem) {
+
+            /**
+             * @name Render.filters
+             **/
+
+            var components        = Component.store('components');
+            var filterComponet = Component.get('filter-item-componet', components);
+
+            if (!Array.isArray(items)) {
+                throw new Error('Something has went wrong with rendering category items.');
+            }
+
+            if (!(elem instanceof Element)) { 
+                elem = el('[data-knowledge-filters]', Wrapper);
+            }
+
+            var fragments = doc.createDocumentFragment();
+
+            var filterItem = Component.get('filter-list-item-componet', components);
+
+            for (var i = 0, len = items.length; i < len; i++) {
+                var item = items[i];
+
+                if (!item.displaytxt) { continue; }
+
+                var html = Parse.component(
+                    filterComponet, [{
+                        name: 'Name',
+                        value: item.displaytxt
+                    }]
+                );
+                
+                var frag = Component.transform(html);
+
+                on(el('button', frag), 'click', function () {
+                    var wrapper = el('[data-filter-list]', Wrapper);
+                    var Item = this,
+                        Name = Item.dataset.filter;
+
+                    var State = Item.dataset.active == 'false' ? true : false;
+
+                    Item.dataset.active = State;
+
+                    if (!State){
+                        var name = Item.dataset.filter;
+                        var sel  = '[data-filter-active="' + name + '"]';
+                        var elem = el(sel, Wrapper);
+                        wrapper.removeChild(elem);
+                    }
+
+                    else {
+                        var html = Parse.component(
+                            filterItem, [{
+                                name: 'Name',
+                                value: Name
+                            }]
+                        );
+                        
+                        var frag = Component.transform(html);
+
+                        wrapper.appendChild(frag);
+                    }
+
+                    wrapper.dataset.filterList = 
+                        wrapper.children.length !== 1 ?  'active' : '';
+                });
+
+                fragments.appendChild(frag);
+            }
+
+            return elem.appendChild(fragments);
+        };
+
 
         var article = function (item, elem) {
 
@@ -603,11 +732,12 @@
 
             fragment.appendChild(frag);
 
-            elem = !elem ? el('[data-article-content]') : elem;
+            elem = !elem ? el('[data-article-content]', Wrapper) : elem;
 
             elem.innerHTML = '';
+            elem.appendChild(fragment);
 
-            return elem.appendChild(fragment);
+            return Container('article');
         };
 
         var feedback = function () {
@@ -657,19 +787,36 @@
             }
 
             elem.innerHTML = '';
-            return elem.appendChild(fragments);
+            elem.appendChild(fragments);
+
+            var url = Parse.url(win.location.href, false);
+            if (url && url.name != 'article') {
+                Container('questions');
+            }
+
+            return;
         };
 
         var search = function (items, elem) {
 
             /**
-             * @name Render.popular
+             * @name Render.search
              **/
 
             var components               = Component.store('components');
             var articleListItemComponent = Component.get('article-list-item-componet', components);
 
             var fragments = doc.createDocumentFragment();
+
+            if (!(elem instanceof Element)) {
+                elem = el('[data-search-results]', Wrapper);
+            }
+
+            var Search = el('[data-search-state]');
+
+            if (Search) {
+                Search.dataset.searchState = 'show';
+            }
 
             for (var i = 0, len = items.length; i < len; i++) {
                 var item = items[i];
@@ -680,11 +827,11 @@
                         value: item.label
                     }, {
                         name: 'Question',
-                        value: item.question
+                        value: item.faq
                     }, {
                         name: 'QuestionEncoded',
                         value: (
-                            (item.question)
+                            (item.faq)
                             .toLowerCase()
                             .replace(/[^\w\s]/gi, '')
                             .replace(/ /g, '-')
@@ -698,7 +845,9 @@
             }
 
             elem.innerHTML = '';
-            return elem.appendChild(fragments);
+            elem.appendChild(fragments);
+
+            return Container('questions');
         };
 
         return {
@@ -706,10 +855,11 @@
             article: article,
             feedback: feedback,
             popular: popular,
-            placeholders: placeholders,
             placeholder: placeholder,
             styles: styles,
             template: template,
+            search: search,
+            filters: filters,
         };
 
     }();
@@ -744,28 +894,33 @@
             return console.warn('Unable to find `.synthetix-iso` wrapper elemenet.');
         }
 
+        Wrapper = wrapper;
+
         Render.styles();
+
+        Get.resource('src/icons.html', function (res) {
+            Wrapper.appendChild(Component.transform(res));
+        });
         
         Get.resource('src/components.html', function (res) {
             var fragment = Component.transform(res);
 
             Component.store({ components: fragment });
         
-            Render.placeholder.search(wrapper);
+            Render.placeholder.search(Wrapper);
 
-            Render.template(wrapper);
+            Render.template(Wrapper);
 
             Get.categories(function (res) {
-                var elem = el('[data-knowledge-categories]', wrapper);
-                Render.categories(res, elem);
+                Render.filters(res);
+                Render.categories(res);
             });
 
-            var url = Parse.url(win.location.href, wrapper);
-
-            if (url === false || url.name == 'category') { return; }
+            var url = Parse.url(win.location.href, true);
+            if (url && url.name == 'category') { return; }
 
             Get.popular({ limitno: 4 }, function (res) {
-                var elem  = el('[data-top-knowledge-list]', wrapper);
+                var elem  = el('[data-top-knowledge-list]', Wrapper);
                 var items = res.items;
                 Render.popular(items, elem);
             });
@@ -788,9 +943,17 @@
         el.removeEventListener(type, handler);
     }
 
+    function url (str) {
+        if (!str) {
+            return win.location.href.replace(win.location.hash, '');
+        }
+    }
+
     on(win, 'popstate', function (e) {
         var path = doc.location.hash;
-        Parse.url(path);
+
+        var url = Parse.url(path, true);
+        if (!url) { Container('questions'); }
     });
 
 }(document, window, synthetix));
