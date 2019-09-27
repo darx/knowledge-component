@@ -7,10 +7,11 @@
     var Wrapper = undefined;
 
     function Loading (state) {
+        var Root = doc.documentElement;
         if (!state) {
-            return doc.documentElement.removeClass('synthetix-loading');
+            return Root.removeClass('synthetix-loading');
         }
-        doc.documentElement.addClass('synthetix-loading');
+        Root.addClass('synthetix-loading');
     }
 
     function Container (state) {
@@ -33,7 +34,7 @@
             var params = {
                 method: 'GET',
                 url: syn.environment + 'external/categories',
-                success: typeof cb === 'function' ? cb : console.log,
+                success: 'function' === typeof cb ? cb : console.log,
             };
 
             Request(params);
@@ -111,7 +112,7 @@
                 },
                 headers: { 'Content-Type': 'application/json' },
                 success: function (res) {
-                    if (typeof cb === 'function') {
+                    if ('function' === typeof cb) {
                         cb(res.results);
                     }
 
@@ -174,7 +175,7 @@
             var params = {
                 method: 'GET',
                 url: dataURL,
-                success: typeof cb === 'function' ? cb : console.log,
+                success: 'function' === typeof cb ? cb : console.log,
             };
 
             Request(params);
@@ -877,7 +878,7 @@
                 url: syn.environment + 'external/article_feedback',
                 data: dataObject,
                 headers: { 'Content-Type': 'application/json' },
-                success: typeof cb === 'function' ? cb : console.log,
+                success: 'function' === typeof cb ? cb : console.log,
             };
 
             Request(params);
