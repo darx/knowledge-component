@@ -226,6 +226,7 @@
             [].forEach.call(children, function (el) { fragment.appendChild(el); });
 
             return fragment;
+
         };
 
         var get = function (sel, context) {
@@ -253,7 +254,7 @@
                 var item = __store[object];
 
                 if ('undefined' === typeof item) {
-                    throw new Error('Unable to find `' + object + '` item.');
+                    return undefined;
                 }
 
                 return item;
@@ -346,20 +347,50 @@
             switch (key) {
                 case 'article':
                     Get.article(value, function (res) {
+                        if (!Component.store('feedback')) {
+                            Component.store({ feedback: Parse.feedback(res.newfeedback) });
+                        }
                         Render.article(res);
                     });
                 break;
 
                 case 'search':
-                    Get.search(value, Render.search, false);
+                    var Query = value.replace(/-/g, ' '),
+                        Form  = el('[data-knowledge-search-actions] form', Wrapper);
+                    
+                    if (Form) { Form.query.value = Query; }
+
+                    Get.search(Query, function (res) {
+                        Render.search(res, null, Query);
+                    }, false);
                 break;
 
                 case 'category':
                     value = decodeURIComponent(value);
-                    Get.popular({
-                        limitno: 4,
-                        category: value
-                    }, function (res) {
+
+                    var placeholder = el('[data-knowledge-category-select]', Wrapper);
+
+                    var params = { limitno: 5, };
+
+                    var Container = el('[data-knowledge-categories]', Wrapper);
+
+                    var Cat = el('[data-category="' + value + '"]', Container);
+
+                    var Active = el('[data-active="true"]', Container);
+
+                    if (Active) { Active.dataset.active = ''; }
+
+                    if (placeholder.innerText.replace(/"/g, '') != value) {
+                        params.category = value;
+                        placeholder.innerText = '"' + value + '"';
+                        Cat.dataset.active = 'true';
+                    }
+
+                    else {
+                        placeholder.innerText = '';
+                    }
+
+                    Get.popular(params, function (res) {
                         Render.popular(res.items,
                             el('[data-top-knowledge-list]'), Wrapper);
                     });
@@ -369,7 +400,78 @@
             return { name: key, value: value };
         };
 
-        return { url: url, component: component }
+        var text = function (str, char) {
+            /**
+             * @name Parse.text
+             **/
+
+            if ('string' !== typeof str) {
+                throw new Error('@param `str` must be a string');
+            }
+
+            return  str.trim().toLowerCase().replace(/[^\w\s]/gi, '').replace(/ /g, char)
+        };
+
+        var results = function () {
+
+            var search = function (items, filter) {
+
+                /**
+                 * @name Parse.results.search
+                 **/
+
+                if (!Array.isArray(items)) {
+                    throw new Error('Parse.results.search @param `arr` must be an array.')
+                }
+
+                var findOne = function (haystack, arr) {
+                    return arr.some(function (v) {
+                        return -1 !== haystack.indexOf(v);
+                    });
+                };
+
+                for (var i = 0, len = items.length; i < len; i++) {
+                    var Article = items[i];
+
+                    if (Article.taxonomy && Article.taxonomy.category) {
+                        console.log(findOne(Article.taxonomy.category, filter));
+                    }
+                }
+
+            };
+
+            return { search: search };
+
+        }();
+
+        var feedback = function (items) {
+            /**
+             * @name Parse.feedback
+             **/
+
+            var keys   = Object.keys(items),
+                Sorted = [];
+
+            for (var i = 0, len = keys.length; i < len; i++) {
+                
+                var Question = Object.keys(items[keys[i]])[0];
+                var Answers  = items[keys[i]][Question];
+
+                Sorted.push({
+                    question: Question,
+                    index: keys[i],
+                    answers: Answers.map(function (item) {
+                        var key = Object.keys(item)[0],
+                            answer = item[key];
+                        return { name: +key, value: answer };
+                    })
+                });
+            }
+
+            return Sorted;
+        };
+
+        return { url: url, component: component, text: text, results: results, feedback: feedback };
 
     }();
 
@@ -440,17 +542,30 @@
                     var Form  = this,
                         Query = Form.query.value.trim();
 
-                    if (!Query) { console.log('test'); return Container('questions'); }
+                    if (!Query) {
+                        var Search = el('[data-search-state]');
+                        if (Search) {
+                            Search.dataset.searchState = 'hidden';
+                        }
+
+                        return Container('questions');
+                    }
 
                     var params = [Query, function (res) {
                         history.pushState({ }, null,
                         '#!/synthetix/knowledge/component/search/' + 
-                            Query.toLowerCase()
-                            .replace(/[^\w\s]/gi, '')
-                            .replace(/ /g, '-')
+                            Parse.text(Query, '-')
                         );
 
-                        Render.search(res);
+                        var Container = el('[data-knowledge-filters]', Wrapper),
+                            Filters   = [].slice.call(Container.querySelectorAll('[data-active="true"]'));
+
+                        if (Filters.length) {
+                            Parse.results.search
+                        }
+
+
+                        Render.search(res, null, Query);
                     }];
 
                     if (e.isTrusted) { params.push(false); }
@@ -538,11 +653,11 @@
                     name: 'HeadingCategory',
                     value: 'Categories'
                 }, {
-                    name: 'HeadingPopular',
-                    value: 'Popular questions'
-                }, {
                     name: 'HeadingSearch',
                     value: 'Search results'
+                }, {
+                    name: 'FeedbackSubmit',
+                    value: 'Send feedback'
                 }])
             );
 
@@ -563,7 +678,7 @@
 
             var load = doc.createElement('style');
                 load.id = 'synthetix-loading-style';
-                load.innerHTML = '.synthetix-loading *{cursor: wait;}';
+                load.innerHTML = 'html{scroll-behavior:smooth;overflow-x:hidden}.synthetix-loading *{cursor:wait}';
 
             doc.body.appendChild(load);
 
@@ -610,11 +725,7 @@
                         value: encodeURIComponent(item.category)
                     }, {
                         name: 'NameClass',
-                        value: item.category
-                            .trim()
-                            .toLowerCase()
-                            .replace(/[^\w\s]/gi, '')
-                            .replace(/ /g, '_')
+                        value: Parse.text(item.category, '_')
                     }]
                 );
                 
@@ -674,15 +785,13 @@
                         var name = Item.dataset.filter;
                         var sel  = '[data-filter-active="' + name + '"]';
                         var elem = el(sel, Wrapper);
+
                         wrapper.removeChild(elem);
                     }
 
                     else {
                         var html = Parse.component(
-                            filterItem, [{
-                                name: 'Name',
-                                value: Name
-                            }]
+                            filterItem, [{ name: 'Name', value: Name }]
                         );
                         
                         var frag = Component.transform(html);
@@ -691,7 +800,7 @@
                     }
 
                     wrapper.dataset.filterList = 
-                        wrapper.children.length !== 1 ?  'active' : '';
+                        wrapper.children.length !== 1 ? 'active' : '';
                 });
 
                 fragments.appendChild(frag);
@@ -710,6 +819,8 @@
             var components       = Component.store('components'),
                 articleComponent = Component.get('article-content-componet', components);
        
+            Render.feedback();
+
             if (Array.isArray(item)) {
                 throw new Error('Article must be an object not an array.');
             }
@@ -738,16 +849,78 @@
             elem.innerHTML = '';
             elem.appendChild(fragment);
 
-            return Container('article');
+            Container('article');
+            // Wrapper.scrollIntoView({ behavior: 'smooth' });
         };
 
-        var feedback = function () {
+        var feedback = function (items, elem) {
 
             /**
              * @name Render.feedback
              **/
 
-            var component = Component.get('');
+            var components        = Component.store('components'),
+                feedbackWrapper   = Component.get('feedback-item-wrapper-componet', components);
+
+            var feedbackChoice    = Component.get('feedback-item-choice-componet', components);
+            var feedbackText      = Component.get('feedback-item-text-componet', components);
+
+            items = !items ? Component.store('feedback') : items;
+
+            var fragment = doc.createDocumentFragment();
+
+            for (var i = 0, len = items.length; i < len; i++) {
+                var Item = items[i];
+
+                var html = Parse.component(feedbackWrapper, [{
+                    name: 'Question',
+                    value: Item.question
+                }]);
+
+                var wrap = Component.transform(html);
+
+                if (Item.answers.length >= 2) {
+                    Item.answers.forEach(function (answer) {
+                        var htmlc = Parse.component(feedbackChoice, [{
+                            name: 'Index',
+                            value: Item.index
+                        }, {
+                            name: 'Answer',
+                            value: answer.value
+                        }, {
+                            name: 'Value',
+                            value: answer.name
+                        }]);
+                        var choice = Component.transform(htmlc);
+                        el('.sx_form_group', wrap).appendChild(choice);
+                    });
+
+                }
+
+                else {
+                    var htmlt = Parse.component(feedbackText, [{
+                        name: 'Index',
+                        value: Item.index
+                    }, {
+                        name: 'Answer',
+                        value: Item.answers[0].value
+                    }, {
+                        name: 'Value',
+                        value: Item.answers[0].name
+                    }]);
+
+                    var text = Component.transform(htmlt);
+                    el('.sx_form_group', wrap).appendChild(text);
+                }
+
+
+                fragment.appendChild(wrap);
+            }
+
+            elem = !elem ? el('[data-feedback] form', Wrapper) : elem;
+
+            elem.innerHTML = '';
+            elem.appendChild(fragment);
         };
 
         var popular = function (items, elem) {
@@ -774,10 +947,7 @@
                     }, {
                         name: 'QuestionEncoded',
                         value: (
-                            (item.question)
-                            .toLowerCase()
-                            .replace(/[^\w\s]/gi, '')
-                            .replace(/ /g, '-')
+                            Parse.text(item.question, '-')
                         )
                     }]
                 );
@@ -798,7 +968,7 @@
             return;
         };
 
-        var search = function (items, elem) {
+        var search = function (items, elem, Query) {
 
             /**
              * @name Render.search
@@ -813,11 +983,21 @@
                 elem = el('[data-search-results]', Wrapper);
             }
 
-            var Search = el('[data-search-state]');
+            else if ('string' === typeof elem) {
+                Query = elem;
+            }
+
+            var QueryPlaceholder = el('[data-knowledge-search-query]', Wrapper);
+
+            QueryPlaceholder.innerText = ' for "' + Query + '"';
+
+            var Search = el('[data-search-state]', Wrapper);
 
             if (Search) {
                 Search.dataset.searchState = 'show';
             }
+
+            if (!items) { return; } 
 
             for (var i = 0, len = items.length; i < len; i++) {
                 var item = items[i];
@@ -831,12 +1011,7 @@
                         value: item.faq
                     }, {
                         name: 'QuestionEncoded',
-                        value: (
-                            (item.faq)
-                            .toLowerCase()
-                            .replace(/[^\w\s]/gi, '')
-                            .replace(/ /g, '-')
-                        )
+                        value: Parse.text(item.faq, '-')
                     }]
                 );
 
@@ -915,15 +1090,15 @@
             Get.categories(function (res) {
                 Render.filters(res);
                 Render.categories(res);
-            });
 
-            var url = Parse.url(win.location.href, true);
-            if (url && url.name == 'category') { return; }
+                var url = Parse.url(win.location.href, true);
+                if (url && url.name == 'category') { return; }
 
-            Get.popular({ limitno: 4 }, function (res) {
-                var elem  = el('[data-top-knowledge-list]', Wrapper);
-                var items = res.items;
-                Render.popular(items, elem);
+                Get.popular({ limitno: 5 }, function (res) {
+                    var elem  = el('[data-top-knowledge-list]', Wrapper);
+                    var items = res.items;
+                    Render.popular(items, elem);
+                });
             });
         });
 

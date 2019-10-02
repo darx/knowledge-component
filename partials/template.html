@@ -2,7 +2,7 @@
 	
 	<div class="knowledge-body__inner">
 		
-		<div class="knowledge-body__container" data-slide="sled">
+		<div class="knowledge-body__container" data-slide="questions">
 			
 			<div class="knowledge-body__container-item--questions" data-slide="questions">
 				
@@ -14,7 +14,7 @@
 							
 							<div class="search-results__inner">
 								
-								<h2 class="search-results__title">{{HeadingSearch}}</h2>
+								<h2 class="search-results__title">{{HeadingSearch}}<span data-knowledge-search-query></span></h2>
 								
 								<div class="search-results__cont">
 						
@@ -37,7 +37,7 @@
 
 						<section class="knowledge-questions">
 
-							<h2 class="knowledge-questions__title" data-top-faq-title>{{HeadingPopular}}</h2>
+							<h2 class="knowledge-questions__title" data-top-faq-title>Popular <span data-knowledge-category-select></span> questions</h2>
 							
 							<div class="knowledge-questions__cont">
 								<ul class="knowledge-questions__list" data-top-knowledge-list></ul>
@@ -63,7 +63,13 @@
 						<div class="article__content--wrapper" data-article-content>
 						</div>
 
-						<div class="article__feedback" data-feedback="container">
+						<div class="article__feedback" data-feedback>
+
+							<form>
+
+
+								<button type="submit">{{FeedbackSubmit}}</button>
+							</form>
 
 						</div>
 			
