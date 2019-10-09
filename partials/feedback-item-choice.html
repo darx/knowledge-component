@@ -1,5 +1,23 @@
-<label for="answer_{{Index}}" role="button" tabindex="0" onkeyup="event.which !== 13 ? false : this.click()" class="sx_form_label_radio">
-    <span class="sx_label_text">{{Answer}}</span>
-    <input type="checkbox" name="feedback[]" id="answer_{{Index}}_{{Value}}" data-checkbox-group="group_{{Index}}" value="{{Value}}">
-    <span class="sx_label_icon"></span>
+<label 
+tabindex="0"
+role="button"
+class="sx_form_label_radio"
+for="sx_answer_{{Index}}_{{Value}}"
+onkeyup="event.which !== 13 ? false : this.click()"
+aria-describedby="sx_question_{{Index}}"
+aria-labelledby="sx_label_{{Index}}_{{Value}}">
+    <input 
+    type="checkbox"
+    value="{{Value}}"
+    name="feedback[]"
+    id="sx_answer_{{Index}}_{{Value}}"
+    data-checkbox-group="group_{{Index}}">
+
+    <span id="sx_label_{{Index}}_{{Value}}" class="sx_label_text">{{Answer}}</span>
+
+    <span class="sx_label_icon">
+        <svg>
+            <use xlink:href="#sx_thumb-{{Type}}_icon"></use>
+        </svg>
+    </span>
 </label>

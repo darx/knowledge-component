@@ -175,6 +175,7 @@
             var params = {
                 method: 'GET',
                 url: dataURL,
+                globalHeaders: false,
                 success: 'function' === typeof cb ? cb : console.log,
             };
 
@@ -189,6 +190,9 @@
 
                 var Response = options.success;
                 options.success = function () {
+
+                    // posible GA event to be sent here
+
                     Loading(false);
                     return Response.apply(null, arguments);
                 }
@@ -343,6 +347,19 @@
             if (!value) { return false; }
 
             if (!run) { return { name: key, value: value }; }
+
+            if (Component.store('ga')) {
+                Send.ga('send', {
+                    hitType: 'event',
+                    eventCategory: 'Synthetix knowledge component',
+                    eventAction: 'Click',
+                    eventLabel: url
+                });
+            }
+
+            if (Component.store('adobe')) {
+                Send.adobe(url);
+            }
 
             switch (key) {
                 case 'article':
@@ -726,6 +743,9 @@
                     }, {
                         name: 'NameClass',
                         value: Parse.text(item.category, '_')
+                    }, {
+                        name: 'ImageURL',
+                        value: item.imageurl
                     }]
                 );
                 
@@ -743,7 +763,7 @@
              * @name Render.filters
              **/
 
-            var components        = Component.store('components');
+            var components     = Component.store('components');
             var filterComponet = Component.get('filter-item-componet', components);
 
             if (!Array.isArray(items)) {
@@ -859,11 +879,19 @@
              * @name Render.feedback
              **/
 
-            var components        = Component.store('components'),
-                feedbackWrapper   = Component.get('feedback-item-wrapper-componet', components);
+            var components      = Component.store('components'),
+                feedbackWrapper = Component.get('feedback-item-wrapper-componet', components);
 
-            var feedbackChoice    = Component.get('feedback-item-choice-componet', components);
-            var feedbackText      = Component.get('feedback-item-text-componet', components);
+            var feedbackChoice  = Component.get('feedback-item-choice-componet', components);
+            var feedbackText    = Component.get('feedback-item-text-componet', components);
+
+            elem = !elem ? el('[data-feedback] form', Wrapper) : elem;
+
+            if (elem.tagName != 'FORM') {
+                throw new Error('The `elem` @param must be a form due to the attached submit event');
+            }
+
+            if (!items && (!elem || elem.length > 2)) { return; }
 
             items = !items ? Component.store('feedback') : items;
 
@@ -875,13 +903,16 @@
                 var html = Parse.component(feedbackWrapper, [{
                     name: 'Question',
                     value: Item.question
+                }, {
+                    name: 'Index',
+                    value: Item.index
                 }]);
 
                 var wrap = Component.transform(html);
 
                 if (Item.answers.length >= 2) {
-                    Item.answers.forEach(function (answer) {
-                        var htmlc = Parse.component(feedbackChoice, [{
+                    Item.answers.forEach(function (answer, index) {
+                        var options = [{
                             name: 'Index',
                             value: Item.index
                         }, {
@@ -890,8 +921,30 @@
                         }, {
                             name: 'Value',
                             value: answer.name
-                        }]);
+                        }];
+
+                        if (Item.answers.length === 2) {
+                            options.push({ name: 'Type', value: index === 0 ? 'up' : 'down' });
+                        }
+
+                        var htmlc = Parse.component(feedbackChoice, options);
+
                         var choice = Component.transform(htmlc);
+
+                        on(el('input', choice), 'change', function () {
+                            var Input = this,
+                                Group = Input.dataset.checkboxGroup;
+
+                            var Container = Input.closest('[data-feedback-route]');
+
+                            Container.dataset.feedbackRoute = !Input.checked ? false : true;
+
+                            var elems = doc.querySelectorAll('[data-checkbox-group="' + Group + '"]');
+                            [].forEach.call(elems, function (elem) {
+                                if (Input != elem) { elem.checked = false; }
+                            });
+                        });
+
                         el('.sx_form_group', wrap).appendChild(choice);
                     });
 
@@ -913,11 +966,12 @@
                     el('.sx_form_group', wrap).appendChild(text);
                 }
 
-
                 fragment.appendChild(wrap);
             }
 
-            elem = !elem ? el('[data-feedback] form', Wrapper) : elem;
+            on(elem, 'submit', function () {
+
+            });
 
             elem.innerHTML = '';
             elem.appendChild(fragment);
@@ -946,9 +1000,7 @@
                         value: item.question
                     }, {
                         name: 'QuestionEncoded',
-                        value: (
-                            Parse.text(item.question, '-')
-                        )
+                        value: Parse.text(item.question, '-')
                     }]
                 );
 
@@ -1060,7 +1112,76 @@
 
         };
 
-        return { feedback: feedback };
+        var ga = (function (string) {
+
+            var funcName = string,
+                __ga     = win[funcName];
+
+            function ga (action, options) {
+
+                /**
+                 * @name Send.ga
+                 **/
+
+                if (!funcName) { return; }
+
+                if ('string' !== typeof action) {
+                    throw new Error('The `action` @param must be a string. i.e. \'send\'');
+                }
+
+                if ('object' !== typeof options) {
+                    throw new Error('')
+                }
+
+                if (-1 === ['create', 'send', 'require'].indexOf(action)) {
+                    throw new Error('Not a valid action `' + action + 
+                        '`, you can only send the following actions', whitelist.actions);
+                }
+
+                return __ga.apply(null, [ action, options ]);
+            }
+
+            ga.setup = function (tag) {
+
+                /**
+                 * @name Send.ga.setup
+                 **/
+
+                if (!funcName) { return; }
+                var clientId = __ga.getAll()[0].get('clientId');
+                Component.store({ ga: clientId });
+                return __ga.apply(null, ['create', tag, { 'clientId': clientId }]);
+            };
+
+            ga.trackingId = function () {
+                if (!funcName) { return false; }
+                var id = win[GoogleAnalyticsObject].getAll()[0].get('trackingId');
+                return id;
+            };
+
+            return ga;
+        }(win.GoogleAnalyticsObject));
+
+        var adobe = (function () {
+
+            function adobe (name) {
+                s.linkTrackVars = 'eVar16,eVar17';
+                s.eVar16 = name;
+                s.eVar17 = s.pageName;
+                s.tl(true, 'o', name);
+            }
+
+            adobe.setup = function () {
+                var check = !win.s ? false : true;
+                Component.store({ adobe: check });
+                return check;
+            };
+
+            return adobe;
+
+        }());
+
+        return { feedback: feedback, ga: ga, adobe: adobe };
 
     }(syn.request);
 
@@ -1100,6 +1221,13 @@
                     Render.popular(items, elem);
                 });
             });
+
+            var trackingId = Send.ga.trackingId();
+            if (trackingId) {
+                Send.ga.setup(trackingId);
+            }
+
+            Send.adobe.setup();
         });
 
     }(el('.synthetix-iso')));
@@ -1110,6 +1238,23 @@
         }
         return (context || document).querySelector(sel);
     }
+
+    function one (el, type, handler) {
+        var handle = {};
+
+        var _handler = function () {
+            off(el, type, _handler);
+            handler.apply(this, arguments);
+        };
+
+        on(el, type, _handler);
+
+        handle.cancel = function () {
+            off(el, type, _handler);
+        };
+
+        return handle;
+    };
 
     function on (el, type, handler) {
         el.addEventListener(type, handler);
