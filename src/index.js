@@ -17,6 +17,10 @@
     function Container (state) {
         var Container = el('[data-slide]', Wrapper);
         if (Container) {
+            one(Container, 'transitionend', function () {
+
+            });
+
             Container.dataset.slide = state;
         }
     }
@@ -367,7 +371,7 @@
                         if (!Component.store('feedback')) {
                             Component.store({ feedback: Parse.feedback(res.newfeedback) });
                         }
-                        Render.article(res);
+                        Render.article(Object.assign({}, res, { label: value }));
                     });
                 break;
 
@@ -417,16 +421,16 @@
             return { name: key, value: value };
         };
 
-        var text = function (str, char) {
+        var text = function (txt, char) {
             /**
              * @name Parse.text
              **/
 
-            if ('string' !== typeof str) {
-                throw new Error('@param `str` must be a string');
+            if ;('string' !== typeof txt) {
+                throw new Error('@param `txt` must be a string');
             }
 
-            return  str.trim().toLowerCase().replace(/[^\w\s]/gi, '').replace(/ /g, char)
+            return (txt.trim().toLowerCase()).replace(/[^\w\s]/gi, '').replace(/ /g, char);
         };
 
         var results = function () {
@@ -488,7 +492,86 @@
             return Sorted;
         };
 
-        return { url: url, component: component, text: text, results: results, feedback: feedback };
+        var form = function (elem) {
+
+            /**
+             * @name Parse.form
+             **/
+
+            if (!(elem instanceof Element) && elem.tagName != 'FORM') {
+                throw new Error('The first @param must be an <FROM> elemenet');
+            }
+
+            var Form = elem;
+
+            var Inputs = Array.from(Form.elements).filter(function (e) {
+                if (e.getAttribute('name')) { return e; }
+            });
+
+            var params = {};
+
+            for (var i = 0, len = Inputs.length; i < len; i++) {
+                var Input = Inputs[i];
+
+                if (!Input.value) { continue; }
+
+                Input.value = Input.value.trim();
+
+                var Arr = Input.name.split(/\[]/);
+
+                if (Arr.length === 1) {
+                    params[Arr[0]] = Input.value;
+                }
+
+                else if (Arr.length === 2 && !Arr[1]) {
+                    if (!params[Arr[0]]) { params[Arr[0]] = []; }
+                    params[Arr[0]].push(Input.value); 
+                }
+
+                else {
+
+                    if (!params[Arr[0]]) { params[Arr[0]] = []; }
+
+                    var temp = {};
+
+                    if (!params[Arr[0]].length) {
+                        temp[Arr[1]] = Input.value;
+                        params[Arr[0]].push(temp);
+                    }
+
+                    else {
+                        params[Arr[0]].forEach(function (e) {
+                            if (e && !e[Arr[1]]) {
+                                e[Arr[1]] = Input.value;
+                            }
+
+                            else {
+                                temp[Arr[1]] = Input.value;
+                                params[Arr[0]].push(temp);
+                            }
+                        });
+                    }
+                }
+            }
+
+            return params;
+        }
+
+        var style = function (str, id) {
+
+            if (!('string' !== typeof str || !Array.isArray(str))) {
+                throw new Error('The `str` @param must be a string or an array');
+            }
+
+            if (Array.isArray(str)) { str = str.join(''); }
+
+            var s = doc.createElement('style');
+                s.innerHTML = str;
+            if ('string' === typeof id) { s.id = id; }
+            return s;
+        };
+
+        return { url: url, component: component, text: text, results: results, feedback: feedback, style: style, form: form };
 
     }();
 
@@ -693,11 +776,12 @@
              * @name Render.styles
              **/
 
-            var load = doc.createElement('style');
-                load.id = 'synthetix-loading-style';
-                load.innerHTML = 'html{scroll-behavior:smooth;overflow-x:hidden}.synthetix-loading *{cursor:wait}';
-
-            doc.body.appendChild(load);
+            doc.body.appendChild(
+                Parse.style(
+                    'html{scroll-behavior:smooth;overflow-x:hidden}.synthetix-loading *{cursor:wait}',
+                    'synthetix-loading-style'
+                )
+            );
 
             Loading(true);
 
@@ -765,6 +849,7 @@
 
             var components     = Component.store('components');
             var filterComponet = Component.get('filter-item-componet', components);
+            var filterRules    = Component.get('filter-item-rules-componet', components);
 
             if (!Array.isArray(items)) {
                 throw new Error('Something has went wrong with rendering category items.');
@@ -774,12 +859,17 @@
                 elem = el('[data-knowledge-filters]', Wrapper);
             }
 
-            var fragments = doc.createDocumentFragment();
+            var searchFilter = el('[data-search-results]', Wrapper);
+
+            var fragments  = doc.createDocumentFragment();
+            var filterRulesArr = [];
 
             var filterItem = Component.get('filter-list-item-componet', components);
 
             for (var i = 0, len = items.length; i < len; i++) {
                 var item = items[i];
+
+                console.log(item);
 
                 if (!item.displaytxt) { continue; }
 
@@ -787,10 +877,20 @@
                     filterComponet, [{
                         name: 'Name',
                         value: item.displaytxt
+                    }, {
+                        name: 'Category',
+                        value: item.category
                     }]
                 );
                 
                 var frag = Component.transform(html);
+
+                var style = Parse.component(filterRules, [{
+                    name: 'Category',
+                    value: item.category
+                }]);
+
+                filterRulesArr.push(style);
 
                 on(el('button', frag), 'click', function () {
                     var wrapper = el('[data-filter-list]', Wrapper);
@@ -806,6 +906,11 @@
                         var sel  = '[data-filter-active="' + name + '"]';
                         var elem = el(sel, Wrapper);
 
+                        if (searchFilter) {
+                            searchFilter.dataset.searchResults = 
+                                searchFilter.dataset.searchResults.replace(name + ',', '');
+                        }
+
                         wrapper.removeChild(elem);
                     }
 
@@ -813,6 +918,10 @@
                         var html = Parse.component(
                             filterItem, [{ name: 'Name', value: Name }]
                         );
+
+                        if (searchFilter) {
+                            searchFilter.dataset.searchResults += Name + ',';
+                        }
                         
                         var frag = Component.transform(html);
 
@@ -823,9 +932,11 @@
                         wrapper.children.length !== 1 ? 'active' : '';
                 });
 
+
                 fragments.appendChild(frag);
             }
 
+            Wrapper.appendChild(Parse.style(filterRulesArr));
             return elem.appendChild(fragments);
         };
 
@@ -839,7 +950,9 @@
             var components       = Component.store('components'),
                 articleComponent = Component.get('article-content-componet', components);
        
-            Render.feedback();
+            console.log(item);
+
+            Render.feedback(null, null, item.label);
 
             if (Array.isArray(item)) {
                 throw new Error('Article must be an object not an array.');
@@ -873,7 +986,7 @@
             // Wrapper.scrollIntoView({ behavior: 'smooth' });
         };
 
-        var feedback = function (items, elem) {
+        var feedback = function (items, elem, qed) {
 
             /**
              * @name Render.feedback
@@ -887,10 +1000,40 @@
 
             elem = !elem ? el('[data-feedback] form', Wrapper) : elem;
 
+            if (elem.label && 'string' == typeof qed) {
+                elem.label.value = qed;
+            }
+
             if (elem.tagName != 'FORM') {
                 throw new Error('The `elem` @param must be a form due to the attached submit event');
             }
 
+            on(elem, 'submit', function (e) {
+                e.preventDefault();
+
+                var Form = this;
+                var params = Parse.form(Form);
+
+                Form.submit.disabled = false;
+
+                Send.feedback(params, function (err, res) {
+                    Form.submit.disabled = false;
+                    if (err) { console.warn('Article feedback was not submited'); }
+
+                    else {
+                        console.log(res);
+                        Form.reset();
+                    }
+                });
+            });
+
+            elem = el('fieldset', elem);
+
+            if (!elem) {
+                throw new Error('The `elem` @param must contain a fieldset');
+            }
+
+            // Preventing re-rendering of feedback
             if (!items && (!elem || elem.length > 2)) { return; }
 
             items = !items ? Component.store('feedback') : items;
@@ -969,10 +1112,6 @@
                 fragment.appendChild(wrap);
             }
 
-            on(elem, 'submit', function () {
-
-            });
-
             elem.innerHTML = '';
             elem.appendChild(fragment);
         };
@@ -989,18 +1128,21 @@
             var fragments = doc.createDocumentFragment();
 
             for (var i = 0, len = items.length; i < len; i++) {
-                var item = items[i];
+                var Item = items[i];
 
                 var html = Parse.component(
                     articleListItemComponent, [{
                         name: 'Label',
-                        value: item.label
+                        value: Item.label
                     }, {
                         name: 'Question',
-                        value: item.question
+                        value: Item.question
                     }, {
                         name: 'QuestionEncoded',
-                        value: Parse.text(item.question, '-')
+                        value: Parse.text(Item.question, '-')
+                    }, {
+                        name: 'Category',
+                        value: Item.category
                     }]
                 );
 
@@ -1052,18 +1194,21 @@
             if (!items) { return; } 
 
             for (var i = 0, len = items.length; i < len; i++) {
-                var item = items[i];
+                var Item = items[i];
 
                 var html = Parse.component(
                     articleListItemComponent, [{
                         name: 'Label',
-                        value: item.label
+                        value: Item.label
                     }, {
                         name: 'Question',
-                        value: item.faq
+                        value: Item.faq
                     }, {
                         name: 'QuestionEncoded',
-                        value: Parse.text(item.faq, '-')
+                        value: Parse.text(Item.faq, '-')
+                    }, {
+                        name: 'Category',
+                        value: Item.taxonomy.category[0]
                     }]
                 );
 
@@ -1094,7 +1239,7 @@
 
     var Send = function (Request) {
 
-        var feedback = function (dataObject) {
+        var feedback = function (dataObject, cb) {
 
             /**
              * @name Send.feedback
@@ -1105,7 +1250,10 @@
                 url: syn.environment + 'external/article_feedback',
                 data: dataObject,
                 headers: { 'Content-Type': 'application/json' },
-                success: 'function' === typeof cb ? cb : console.log,
+                success: function (res) {
+                    if ('function' === typeof cb) { cb(null, res); }
+                },
+                error: 'function' === typeof cb ? cb : console.log,
             };
 
             Request(params);
@@ -1241,6 +1389,7 @@
 
     function one (el, type, handler) {
         var handle = {};
+        var handler = handler;
 
         var _handler = function () {
             off(el, type, _handler);

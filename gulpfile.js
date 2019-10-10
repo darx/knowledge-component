@@ -22,7 +22,7 @@ gulp.task('partials', async () => {
     .then((files) => {
 
         let snippets = files.data.map((file, i) => {
-            let name = files.names[i].split(/.html/)[0];
+            let name = files.names[i].split(/\.[^.]*$/)[0];
 
             let prepend = `<script id="${name}-componet" type="text/html">`,
                 append  = '</script>';
@@ -61,7 +61,7 @@ gulp.task('partials-dev', async () => {
     .then((files) => {
 
         let snippets = files.data.map((file, i) => {
-            let name = files.names[i].split(/.html/)[0];
+            let name = files.names[i].split(/\.[^.]*$/)[0];
 
             let prepend = `<script id="${name}-componet" type="text/html">`,
                 append  = '</script>\n';

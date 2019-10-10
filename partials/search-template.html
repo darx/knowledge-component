@@ -6,8 +6,14 @@
 	
 			<form class="knowledge-header__search-form" data-form="knowledge-header">
 	
-				<input type="search" name="query" title="{{SearchPlaceholder}}" placeholder="{{SearchPlaceholder}}" class="knowledge-header__search-field">
-				<button type="submit"></button>
+				<input 
+				required 
+				name="query" 
+				type="search"  
+				title="{{SearchPlaceholder}}" 
+				placeholder="{{SearchPlaceholder}}" 
+				class="knowledge-header__search-field">
+				<button type="submit" name="submit"></button>
 	
 			</form>
 	
@@ -16,14 +22,14 @@
 		<div class="filter-bar">
 	
 			<button 
-				type="button" 
-				class="filter-bar__menu-btn"
-				title="Click to show filter options">
-					<span class="sx_svg_icon">
-		                <svg>
-		                    <use xlink:href="#sx_filter_icon"></use>
-		                </svg>
-		            </span>
+			type="button" 
+			class="filter-bar__menu-btn"
+			title="Click to show filter options">
+				<span class="sx_svg_icon">
+	                <svg>
+	                    <use xlink:href="#sx_filter_icon"></use>
+	                </svg>
+	            </span>
 			</button>
 	
 			<div class="filter-bar__curr-filters">
