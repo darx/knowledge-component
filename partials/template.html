@@ -65,7 +65,12 @@
 
 						<div class="article__feedback" data-feedback>
 
-							<form>
+							<form
+							action="./"
+							method="POST"
+							data-manual-submit="false"
+							data-success-submit="false"
+							data-form="knowledge-feedback">
 								<input type="hidden" name="label">
 								<fieldset></fieldset>
 								<button type="submit" name="submit">{{FeedbackSubmit}}</button>

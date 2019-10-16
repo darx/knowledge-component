@@ -4,12 +4,17 @@
 	
 		<div class="knowledge-header__search-field-wrapper">
 	
-			<form class="knowledge-header__search-form" data-form="knowledge-header">
+			<form
+			action="./"
+			method="POST"
+			data-form="knowledge-header"
+			class="knowledge-header__search-form">
 	
 				<input 
 				required 
 				name="query" 
-				type="search"  
+				type="search"
+				autocapitalize="none"
 				title="{{SearchPlaceholder}}" 
 				placeholder="{{SearchPlaceholder}}" 
 				class="knowledge-header__search-field">
@@ -56,8 +61,7 @@
 		
 				<div class="filters-masonry-grid">
 		
-					<div class="filters-masonry-grid__inner" data-knowledge-filters>
-					</div>
+					<div class="filters-masonry-grid__inner" data-knowledge-filters></div>
 		
 				</div>
 		

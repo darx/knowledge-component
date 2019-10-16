@@ -371,6 +371,7 @@
                         if (!Component.store('feedback')) {
                             Component.store({ feedback: Parse.feedback(res.newfeedback) });
                         }
+                        console.log(Send.feedback.logic());
                         Render.article(Object.assign({}, res, { label: value }));
                     });
                 break;
@@ -426,7 +427,7 @@
              * @name Parse.text
              **/
 
-            if ;('string' !== typeof txt) {
+            if ('string' !== typeof txt) {
                 throw new Error('@param `txt` must be a string');
             }
 
@@ -471,25 +472,40 @@
              **/
 
             var keys   = Object.keys(items),
-                Sorted = [];
+                Logic  = syn.config.fb_log,
+                Sorted = [], Desc = {};
 
             for (var i = 0, len = keys.length; i < len; i++) {
                 
                 var Question = Object.keys(items[keys[i]])[0];
                 var Answers  = items[keys[i]][Question];
 
-                Sorted.push({
+                var param = {
                     question: Question,
                     index: keys[i],
                     answers: Answers.map(function (item) {
                         var key = Object.keys(item)[0],
                             answer = item[key];
+
+                            if (Logic) {
+                                var Qs = Object.keys(Logic);
+                                if (Logic[Qs[i]][answer]) {
+                                    var N = Logic[Qs[i]][answer];
+                                    Desc[+key] = N == 'quit' 
+                                        ? 'quit'
+                                        : (+N.slice(1, N.length));
+                                }
+                                
+                            }
+
                         return { name: +key, value: answer };
                     })
-                });
+                };
+
+                Sorted.push(param);
             }
 
-            return Sorted;
+            return { Store: Sorted, Logic: Desc };
         };
 
         var form = function (elem) {
@@ -776,19 +792,17 @@
              * @name Render.styles
              **/
 
-            doc.body.appendChild(
-                Parse.style(
-                    'html{scroll-behavior:smooth;overflow-x:hidden}.synthetix-loading *{cursor:wait}',
-                    'synthetix-loading-style'
-                )
-            );
+            doc.body.insertBefore(Parse.style(
+                'html{scroll-behavior:smooth;overflow-x:hidden}.synthetix-loading *{cursor:wait}',
+                'synthetix-loading-style'
+            ), doc.body.firstChild);
 
             Loading(true);
 
             Get.resource('src/main.css', function (res) {
                 var style = doc.createElement('style');
                 style.innerHTML = res;
-                doc.body.appendChild(style);
+                doc.body.insertBefore(style, doc.body.firstChild);
             });
 
         };
@@ -869,8 +883,6 @@
             for (var i = 0, len = items.length; i < len; i++) {
                 var item = items[i];
 
-                console.log(item);
-
                 if (!item.displaytxt) { continue; }
 
                 var html = Parse.component(
@@ -949,8 +961,6 @@
 
             var components       = Component.store('components'),
                 articleComponent = Component.get('article-content-componet', components);
-       
-            console.log(item);
 
             Render.feedback(null, null, item.label);
 
@@ -1000,32 +1010,17 @@
 
             elem = !elem ? el('[data-feedback] form', Wrapper) : elem;
 
+            console.log(elem.label.value);
+
             if (elem.label && 'string' == typeof qed) {
                 elem.label.value = qed;
             }
 
+            elem.dataset.successSubmit = false;
+
             if (elem.tagName != 'FORM') {
                 throw new Error('The `elem` @param must be a form due to the attached submit event');
             }
-
-            on(elem, 'submit', function (e) {
-                e.preventDefault();
-
-                var Form = this;
-                var params = Parse.form(Form);
-
-                Form.submit.disabled = false;
-
-                Send.feedback(params, function (err, res) {
-                    Form.submit.disabled = false;
-                    if (err) { console.warn('Article feedback was not submited'); }
-
-                    else {
-                        console.log(res);
-                        Form.reset();
-                    }
-                });
-            });
 
             elem = el('fieldset', elem);
 
@@ -1036,7 +1031,27 @@
             // Preventing re-rendering of feedback
             if (!items && (!elem || elem.length > 2)) { return; }
 
-            items = !items ? Component.store('feedback') : items;
+            on(elem.form, 'submit', function (e) {
+                e.preventDefault();
+
+                var Form = this;
+                var params = Parse.form(Form);
+
+                Form.submit.disabled = false;
+                Form.dataset.manualSubmit = false;
+                Form.dataset.successSubmit = true;
+
+                Send.feedback(params, function (err, res) {
+                    Form.submit.disabled = false;
+                    if (err) { console.warn('Article feedback was not submited'); }
+
+                    else {
+                        console.log(res);
+                    }
+                });
+            });
+
+            items = !items ? Component.store('feedback').Store : items;
 
             var fragment = doc.createDocumentFragment();
 
@@ -1076,7 +1091,22 @@
 
                         on(el('input', choice), 'change', function () {
                             var Input = this,
-                                Group = Input.dataset.checkboxGroup;
+                                Group = Input.dataset.checkboxGroup,
+                                Form  = Input.form;
+
+                            var Logic = Component.store('feedback').Logic;
+
+                            if (Logic[+Input.value] == 'quit' && Input.checked) {
+                                var action = document.createEvent('Event');
+
+                                action.initEvent('submit', false, true);
+                                return Form.dispatchEvent(action);
+                            }
+
+                            var Next = el('[id*="answer_' + Logic[+Input.value] + '"]', Form);
+
+                            Form.dataset.manualSubmit = 
+                                Next && Next.tagName == 'TEXTAREA' ? true : false;
 
                             var Container = Input.closest('[data-feedback-route]');
 
@@ -1111,6 +1141,18 @@
 
                 fragment.appendChild(wrap);
             }
+
+            var htmls = Parse.component(feedbackWrapper, [{
+                name: 'Question',
+                value: 'Thank you for your feedback'
+            }, {
+                name: 'Index',
+                value: 99
+            }]);
+
+            var success = Component.transform(htmls);
+
+            fragment.appendChild(success);
 
             elem.innerHTML = '';
             elem.appendChild(fragment);
@@ -1239,26 +1281,49 @@
 
     var Send = function (Request) {
 
-        var feedback = function (dataObject, cb) {
+        var feedback = (function () {
 
-            /**
-             * @name Send.feedback
-             **/
+            function feedback (dataObject, cb) {
 
-            var params = {
-                method: 'POST',
-                url: syn.environment + 'external/article_feedback',
-                data: dataObject,
-                headers: { 'Content-Type': 'application/json' },
-                success: function (res) {
-                    if ('function' === typeof cb) { cb(null, res); }
-                },
-                error: 'function' === typeof cb ? cb : console.log,
+                /**
+                 * @name Send.feedback
+                 **/
+
+                var params = {
+                    method: 'POST',
+                    url: syn.environment + 'external/article_feedback',
+                    data: dataObject,
+                    headers: { 'Content-Type': 'application/json' },
+                    success: function (res) {
+                        if ('function' === typeof cb) { cb(null, res); }
+                    },
+                    error: 'function' === typeof cb ? cb : console.log,
+                };
+
+                Request(params);
+
             };
 
-            Request(params);
+            feedback.logic = function () {
 
-        };
+                /**
+                 * @name Send.feedback.logic
+                 **/
+
+                if (!Component.store('feedback')) {
+                    return console.warn('Unable to perform feedback decision due to article feedback not being stored');
+                }
+
+                var __logic    = synthetix.config.fb_log;
+                var __feedback = Component.store('feedback');
+
+
+
+            };
+
+            return feedback;
+
+        }());
 
         var ga = (function (string) {
 
