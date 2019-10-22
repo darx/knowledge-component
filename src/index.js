@@ -117,7 +117,7 @@
                 headers: { 'Content-Type': 'application/json' },
                 success: function (res) {
                     if ('function' === typeof cb) {
-                        cb(res.results);
+                        cb(!res.results ? [] : res.results);
                     }
 
                     else {
@@ -365,13 +365,23 @@
                 Send.adobe(url);
             }
 
+            var link = el('[href*="' + structured.hash + '"]', Wrapper);
+
+            // firefox doesn't register repeated clicks on the same hash
+            if (link && navigator.userAgent.toLowerCase().indexOf('firefox') !== -1) {
+                var num  = +(parsed[parsed.length - 1]);
+
+                link.hash = isNaN(num) 
+                    ? link.hash + '/1'
+                    : link.hash.replace(('/' + num), ('/' + (num + 1)));
+            }
+
             switch (key) {
                 case 'article':
                     Get.article(value, function (res) {
                         if (!Component.store('feedback')) {
                             Component.store({ feedback: Parse.feedback(res.newfeedback) });
                         }
-                        console.log(Send.feedback.logic());
                         Render.article(Object.assign({}, res, { label: value }));
                     });
                 break;
@@ -521,7 +531,9 @@
             var Form = elem;
 
             var Inputs = Array.from(Form.elements).filter(function (e) {
-                if (e.getAttribute('name')) { return e; }
+                if (e.name && ((['checkbox', 'radio'].indexOf(e.type) === -1) || e.checked)) {
+                    return e;
+                }
             });
 
             var params = {};
@@ -770,7 +782,7 @@
                     value: 'Categories'
                 }, {
                     name: 'HeadingSearch',
-                    value: 'Search results'
+                    value: 'Search results for '
                 }, {
                     name: 'FeedbackSubmit',
                     value: 'Send feedback'
@@ -793,7 +805,7 @@
              **/
 
             doc.body.insertBefore(Parse.style(
-                'html{scroll-behavior:smooth;overflow-x:hidden}.synthetix-loading *{cursor:wait}',
+                '.synthetix-loading *{cursor:wait}',
                 'synthetix-loading-style'
             ), doc.body.firstChild);
 
@@ -863,7 +875,8 @@
 
             var components     = Component.store('components');
             var filterComponet = Component.get('filter-item-componet', components);
-            var filterRules    = Component.get('filter-item-rules-componet', components);
+
+            console.log(filterComponet);
 
             if (!Array.isArray(items)) {
                 throw new Error('Something has went wrong with rendering category items.');
@@ -873,10 +886,7 @@
                 elem = el('[data-knowledge-filters]', Wrapper);
             }
 
-            var searchFilter = el('[data-search-results]', Wrapper);
-
             var fragments  = doc.createDocumentFragment();
-            var filterRulesArr = [];
 
             var filterItem = Component.get('filter-list-item-componet', components);
 
@@ -888,7 +898,7 @@
                 var html = Parse.component(
                     filterComponet, [{
                         name: 'Name',
-                        value: item.displaytxt
+                        value: item.displaytxt.trim()
                     }, {
                         name: 'Category',
                         value: item.category
@@ -897,31 +907,22 @@
                 
                 var frag = Component.transform(html);
 
-                var style = Parse.component(filterRules, [{
-                    name: 'Category',
-                    value: item.category
-                }]);
-
-                filterRulesArr.push(style);
-
-                on(el('button', frag), 'click', function () {
+                on(el('input', frag), 'change', function () {
                     var wrapper = el('[data-filter-list]', Wrapper);
-                    var Item = this,
-                        Name = Item.dataset.filter;
 
-                    var State = Item.dataset.active == 'false' ? true : false;
+                    var Item  = this,
+                        Form  = Item.form,
+                        Name  = Item.dataset.filter,
+                        Label = Item.parentElement;
 
-                    Item.dataset.active = State;
+                    var State = Label.dataset.active == 'false' ? true : false;
+
+                    Label.dataset.active = State;
 
                     if (!State){
-                        var name = Item.dataset.filter;
+                        var name = Item.value;
                         var sel  = '[data-filter-active="' + name + '"]';
                         var elem = el(sel, Wrapper);
-
-                        if (searchFilter) {
-                            searchFilter.dataset.searchResults = 
-                                searchFilter.dataset.searchResults.replace(name + ',', '');
-                        }
 
                         wrapper.removeChild(elem);
                     }
@@ -930,10 +931,6 @@
                         var html = Parse.component(
                             filterItem, [{ name: 'Name', value: Name }]
                         );
-
-                        if (searchFilter) {
-                            searchFilter.dataset.searchResults += Name + ',';
-                        }
                         
                         var frag = Component.transform(html);
 
@@ -942,13 +939,13 @@
 
                     wrapper.dataset.filterList = 
                         wrapper.children.length !== 1 ? 'active' : '';
-                });
 
+                    Render.search(Render.search.filter(), null, null, true);
+                });
 
                 fragments.appendChild(frag);
             }
 
-            Wrapper.appendChild(Parse.style(filterRulesArr));
             return elem.appendChild(fragments);
         };
 
@@ -1010,9 +1007,8 @@
 
             elem = !elem ? el('[data-feedback] form', Wrapper) : elem;
 
-            console.log(elem.label.value);
-
             if (elem.label && 'string' == typeof qed) {
+                elem.reset();
                 elem.label.value = qed;
             }
 
@@ -1029,7 +1025,7 @@
             }
 
             // Preventing re-rendering of feedback
-            if (!items && (!elem || elem.length > 2)) { return; }
+            if (!items && (!elem || elem.children.length > 2)) { return; }
 
             on(elem.form, 'submit', function (e) {
                 e.preventDefault();
@@ -1048,6 +1044,13 @@
                     else {
                         console.log(res);
                     }
+                });
+            });
+
+            on(elem.form, 'reset', function () {
+                var elems = elem.form.querySelectorAll('[data-feedback-route]');
+                [].forEach.call(elems, function (elem) {
+                    elem.dataset.feedbackRoute = false;
                 });
             });
 
@@ -1106,15 +1109,26 @@
                             var Next = el('[id*="answer_' + Logic[+Input.value] + '"]', Form);
 
                             Form.dataset.manualSubmit = 
-                                Next && Next.tagName == 'TEXTAREA' ? true : false;
+                                Next && Next.tagName == 'TEXTAREA' && Input.checked ? true : false;
 
-                            var Container = Input.closest('[data-feedback-route]');
+                            var Container = el('[data-feedback-group="' + Logic[+Input.value] + '"]', Form);
 
                             Container.dataset.feedbackRoute = !Input.checked ? false : true;
 
                             var elems = doc.querySelectorAll('[data-checkbox-group="' + Group + '"]');
                             [].forEach.call(elems, function (elem) {
-                                if (Input != elem) { elem.checked = false; }
+                                if (Input != elem) {
+                                    var ElemsInput = el('[data-feedback-group="' + Logic[+elem.value] + '"]', Form);
+                                    if (!isNaN(+elem.value) && ElemsInput) {
+                                        ElemsInput.dataset.feedbackRoute = false;
+
+                                        var checks = ElemsInput.querySelectorAll('input[type="checkbox"]');
+                                        [].forEach.call(checks, function (e) {
+                                            e.checked = false;
+                                        });
+                                    }
+                                    elem.checked = false;
+                                }
                             });
                         });
 
@@ -1204,66 +1218,104 @@
             return;
         };
 
-        var search = function (items, elem, Query) {
+        var search = (function () {
 
-            /**
-             * @name Render.search
-             **/
+            var results = undefined;
 
-            var components               = Component.store('components');
-            var articleListItemComponent = Component.get('article-list-item-componet', components);
+            function search (items, elem, Query, Filtered) {
 
-            var fragments = doc.createDocumentFragment();
+                /**
+                 * @name Render.search
+                 **/
 
-            if (!(elem instanceof Element)) {
-                elem = el('[data-search-results]', Wrapper);
+                var components               = Component.store('components');
+                var articleListItemComponent = Component.get('article-list-item-componet', components);
+
+                var fragments = doc.createDocumentFragment();
+
+                if (!(elem instanceof Element)) {
+                    elem = el('[data-search-results]', Wrapper);
+                }
+
+                else if ('string' === typeof elem) {
+                    Query = elem;
+                }
+
+                var QueryPlaceholder = el('[data-knowledge-search-query]', Wrapper);
+
+                if ('string' === typeof Query) { QueryPlaceholder.innerText = '"' + Query + '"'; }
+
+                var Search = el('[data-search-state]', Wrapper);
+
+                if (Search) {
+                    Search.dataset.searchState = 'show';
+                }
+
+                if (!items) { return; }
+
+                if (!Filtered) {
+                    results = items;
+                    items   = search.filter(items);
+                }
+                
+                for (var i = 0, len = items.length; i < len; i++) {
+                    var Item = items[i];
+
+                    var html = Parse.component(
+                        articleListItemComponent, [{
+                            name: 'Label',
+                            value: Item.label
+                        }, {
+                            name: 'Question',
+                            value: Item.faq
+                        }, {
+                            name: 'QuestionEncoded',
+                            value: Parse.text(Item.faq, '-')
+                        }, {
+                            name: 'Category',
+                            value: Item.taxonomy.category[0]
+                        }]
+                    );
+
+                    var frag = Component.transform(html);
+
+                    fragments.appendChild(frag);
+                }
+
+                elem.innerHTML = '';
+                elem.appendChild(fragments);
+
+                return Container('questions');
             }
 
-            else if ('string' === typeof elem) {
-                Query = elem;
-            }
+            search.filter = function (data, options) {
 
-            var QueryPlaceholder = el('[data-knowledge-search-query]', Wrapper);
+                /**
+                 * @name Render.search.filter
+                 **/
 
-            QueryPlaceholder.innerText = ' for "' + Query + '"';
+                var Items = !data ? results : data;
 
-            var Search = el('[data-search-state]', Wrapper);
+                if (!Items || !Array.isArray(Items)) {
+                    throw new Error('Search data must be an array to filter');
+                }
 
-            if (Search) {
-                Search.dataset.searchState = 'show';
-            }
+                var Form   = el('[data-form="knowledge-filter"]', Wrapper),
+                    Filter = !options ? Parse.form(Form).filter : options;
 
-            if (!items) { return; } 
+                if (!Array.isArray(Filter)) { return Items; }
+                if (!Filter.length) { return Items; }
 
-            for (var i = 0, len = items.length; i < len; i++) {
-                var Item = items[i];
+                var Filtered = Items.filter(function (item) {
+                    if (Filter.indexOf(item.taxonomy.category[0].trim()) !== -1) { return item; }
+                });
 
-                var html = Parse.component(
-                    articleListItemComponent, [{
-                        name: 'Label',
-                        value: Item.label
-                    }, {
-                        name: 'Question',
-                        value: Item.faq
-                    }, {
-                        name: 'QuestionEncoded',
-                        value: Parse.text(Item.faq, '-')
-                    }, {
-                        name: 'Category',
-                        value: Item.taxonomy.category[0]
-                    }]
-                );
+                return Filtered;
+            };
 
-                var frag = Component.transform(html);
+            return search;
 
-                fragments.appendChild(frag);
-            }
-
-            elem.innerHTML = '';
-            elem.appendChild(fragments);
-
-            return Container('questions');
-        };
+        }());
 
         return {
             categories: categories,
@@ -1281,49 +1333,26 @@
 
     var Send = function (Request) {
 
-        var feedback = (function () {
+        var feedback = function (dataObject, cb) {
 
-            function feedback (dataObject, cb) {
+            /**
+             * @name Send.feedback
+             **/
 
-                /**
-                 * @name Send.feedback
-                 **/
-
-                var params = {
-                    method: 'POST',
-                    url: syn.environment + 'external/article_feedback',
-                    data: dataObject,
-                    headers: { 'Content-Type': 'application/json' },
-                    success: function (res) {
-                        if ('function' === typeof cb) { cb(null, res); }
-                    },
-                    error: 'function' === typeof cb ? cb : console.log,
-                };
-
-                Request(params);
-
+            var params = {
+                method: 'POST',
+                url: syn.environment + 'external/article_feedback',
+                data: dataObject,
+                headers: { 'Content-Type': 'application/json' },
+                success: function (res) {
+                    if ('function' === typeof cb) { cb(null, res); }
+                },
+                error: 'function' === typeof cb ? cb : console.log,
             };
 
-            feedback.logic = function () {
+            Request(params);
 
-                /**
-                 * @name Send.feedback.logic
-                 **/
-
-                if (!Component.store('feedback')) {
-                    return console.warn('Unable to perform feedback decision due to article feedback not being stored');
-                }
-
-                var __logic    = synthetix.config.fb_log;
-                var __feedback = Component.store('feedback');
-
-
-
-            };
-
-            return feedback;
-
-        }());
+        };
 
         var ga = (function (string) {
 
