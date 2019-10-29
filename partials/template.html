@@ -30,21 +30,34 @@
 						
 						</section>
 
-						<section class="knowledge-categories">
+						<section class="knowledge-categories" data-slide="category">
 							
-							<h2 class="knowledge-categories__title">{{HeadingCategory}}</h2>
-							
-							<div class="knowledge-categories-grid" data-knowledge-categories>
+							<div class="knowledge-body__container-item--category">
+								<h2 class="knowledge-categories__title">{{HeadingCategory}}</h2>
+								
+								<div class="knowledge-categories-grid" data-knowledge-categories></div>
 							</div>
 
+							<div class="knowledge-body__container-item--subcategory">
+								<h2 class="knowledge-categpries__tile">
+									Subcategories relating to <span data-subcategory-select></span> category
+								</h2>
+
+								<div data-subcategories-container></div>
+							</div>
 						</section>
 
 						<section class="knowledge-questions">
 
-							<h2 class="knowledge-questions__title" data-top-faq-title>Popular <span data-knowledge-category-select></span> questions</h2>
+							<h2 class="knowledge-questions__title" data-top-faq-title>Popular <span data-knowledge-category-select></span> <span data-knowledge-subcategory-select></span> questions</h2>
 							
 							<div class="knowledge-questions__cont">
 								<ul class="knowledge-questions__list" data-top-knowledge-list></ul>
+
+								<div class="question-results__empty">
+									<h3>Unfortunately the selected Category/Subctegory has returned no results.</h3>
+								</div>
+
 							</div>
 						
 						</section>

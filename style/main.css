@@ -349,6 +349,68 @@
     background-color: #000;
 }
 
+.synthetix-iso .knowledge-questions__list:empty + .question-results__empty {
+    display: block;
+}
+
+.synthetix-iso .knowledge-questions__list:not(:empty) + .question-results__empty {
+    display: none;
+}
+
+.synthetix-iso .knowledge-categories-grid .knowledge-categories-grid__tile[data-active] .knowledge-subcategories {
+    display: none;
+    position: absolute;
+    background-color: #fff;
+    z-index: 90;
+}
+
+.synthetix-iso .knowledge-categories-grid .knowledge-categories-grid__tile[data-active] .knowledge-subcategories a {
+    display: inline-block;
+    padding: 1em
+}
+
+.synthetix-iso .knowledge-categories-grid .knowledge-categories-grid__tile[data-active="true"] .knowledge-subcategories {
+    display: block;
+}
+
+.synthetix-iso .knowledge-categories .knowledge-body__container-item--subcategory a {
+    padding: 1em;
+    font-size: 1.24em;
+    display: inline-block;
+}
+
+.synthetix-iso .knowledge-categories {
+    display: flex;
+    flex-wrap: nowrap;
+    position: relative;
+    overflow-x: hidden;
+    flex-direction: row;
+    will-change: display, transform;
+}
+
+.synthetix-iso [data-slide] .knowledge-body__container-item--category,
+.synthetix-iso [data-slide] .knowledge-body__container-item--subcategory {
+    width: 100%;
+    flex: 0 0 auto;
+    will-change: display, transform;
+}
+
+.synthetix-iso [data-slide="category"] .knowledge-body__container-item--category,
+.synthetix-iso [data-slide="category"] .knowledge-body__container-item--subcategory {
+    transform: translate(0%, 0);
+}
+
+
+.synthetix-iso [data-slide="subcategory"] .knowledge-body__container-item--category,
+.synthetix-iso [data-slide="subcategory"] .knowledge-body__container-item--subcategory {
+    transform: translate(-100%, 0);
+}
+
+.synthetix-iso [data-slide="subcategory"] .knowledge-body__container-item--category,
+.synthetix-iso [data-slide="category"] .knowledge-body__container-item--subcategory {
+    height: 0;
+}
+
 
 /*
 
@@ -469,7 +531,6 @@
 .synthetix-iso .knowledge-questions__list li a:focus .sx_svg_icon {
     transform: translate(.5em, 0);
 }
-
 
 
 .synthetix-iso .search-results__list:empty + .search-results__empty {
@@ -661,6 +722,7 @@
 .synthetix-iso [data-slide] .knowledge-body__container-item--questions {
     width: 100%;
     flex: 0 0 auto;
+    will-change: display, transform;
 }
 
 .synthetix-iso [data-slide="questions"] .knowledge-body__container-item--article,

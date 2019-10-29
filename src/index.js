@@ -14,8 +14,11 @@
         Root.addClass('synthetix-loading');
     }
 
-    function Container (state) {
-        var Container = el('[data-slide]', Wrapper);
+    function Container (state, elem) {
+        var Container = !elem 
+            ? el('[data-slide]', Wrapper) 
+            : elem;
+
         if (Container) {
             one(Container, 'transitionend', function () {
 
@@ -144,6 +147,10 @@
                 ? 'all' 
                 : dataObject.category;
 
+            if (dataObject.subcategory) {
+                name = name + '/' + dataObject.subcategory;
+            }
+
             if (!store.popular && 'function' === typeof cb) {
                 store.popular = {};
             }
@@ -160,8 +167,10 @@
                 data: dataObject,
                 success: function (res) {
                     if ('function' === typeof cb) {
-                        store.popular[name] = res;
-                        cb(res);
+                        store.popular[name] = !res.items 
+                            ? { items: [] }
+                            : res;
+                        cb(store.popular[name]);
                     }
                 }
             };
@@ -376,12 +385,17 @@
                     : link.hash.replace(('/' + num), ('/' + (num + 1)));
             }
 
+            var catPlaceholder = el('[data-knowledge-category-select]', Wrapper);
+
             switch (key) {
                 case 'article':
+
                     Get.article(value, function (res) {
                         if (!Component.store('feedback')) {
                             Component.store({ feedback: Parse.feedback(res.newfeedback) });
                         }
+
+                        catPlaceholder.innerText = '';
                         Render.article(Object.assign({}, res, { label: value }));
                     });
                 break;
@@ -398,9 +412,8 @@
                 break;
 
                 case 'category':
+                case 'subcategory':
                     value = decodeURIComponent(value);
-
-                    var placeholder = el('[data-knowledge-category-select]', Wrapper);
 
                     var params = { limitno: 5, };
 
@@ -410,16 +423,43 @@
 
                     var Active = el('[data-active="true"]', Container);
 
-                    if (Active) { Active.dataset.active = ''; }
+                    var State = el('[data-slide*="category"]', Wrapper);
 
-                    if (placeholder.innerText.replace(/"/g, '') != value) {
+                    if (Active && key != 'subcategory') { Active.dataset.active = ''; }
+
+                    if (Cat.subcategories) {
+                        Render.subcategories(value, Cat.subcategories);
+                        State.dataset.slide = 'subcategory';
+                    }
+
+                    if (key == 'subcategory') {
+
+                        value = [decodeURIComponent(parsed[1]), decodeURIComponent(parsed[2])]
+
+                        if (catPlaceholder.innerText.replace(/"/g, '') != value[1]) {
+                            params.category = value[0];
+                            params.subcategory = value[1];
+                            
+                            catPlaceholder.innerText = '"' + value[1] + '"';
+
+                            Cat.dataset.active = 'true';
+                            State.dataset.slide = 'subcategory';
+                        }
+
+                        else {
+                            State.dataset.slide = 'category';
+                            catPlaceholder.innerText = '';
+                        }
+                    }
+
+                    else if (catPlaceholder.innerText.replace(/"/g, '') != value) {
                         params.category = value;
-                        placeholder.innerText = '"' + value + '"';
+                        catPlaceholder.innerText = '"' + value + '"';
                         Cat.dataset.active = 'true';
                     }
 
                     else {
-                        placeholder.innerText = '';
+                        catPlaceholder.innerText = '';
                     }
 
                     Get.popular(params, function (res) {
@@ -861,9 +901,59 @@
                 
                 var frag = Component.transform(html);
 
+                if (item.subcategory && item.subcategory.length) {
+                    el('[data-category]', frag).subcategories = item.subcategory;
+                }
+
                 fragments.appendChild(frag);
             }
 
+            return elem.appendChild(fragments);
+        };
+
+        var subcategories = function (category, items, elem) {
+
+            /**
+             * @name Render.subcategories
+             **/
+
+            var components        = Component.store('components');
+            var categoryComponent = Component.get('subcategory-componet', components);
+            
+            if (!(elem instanceof Element)) { 
+                elem = el('[data-subcategories-container]', Wrapper);
+            }
+
+            var fragments = doc.createDocumentFragment();
+
+            var Heading = el('[data-subcategory-select]', Wrapper);
+
+            if (Heading) {
+                Heading.innerText = '"' + category + '"';
+            }
+
+            for (var i = 0, len = items.length; i < len; i++) {
+                var item = items[i];
+
+                var html = Parse.component(
+                    categoryComponent, [{
+                        name: 'Name',
+                        value: item.category
+                    }, {
+                        name: 'NameEncoded',
+                        value: encodeURIComponent(category) + '/' + encodeURIComponent(item.category)
+                    }, {
+                        name: 'NameClass',
+                        value: Parse.text(item.category, '_')
+                    }]
+                );
+
+                var frag = Component.transform(html);
+
+                fragments.appendChild(frag);
+            }
+
+            elem.innerHTML = '';
             return elem.appendChild(fragments);
         };
 
@@ -875,8 +965,6 @@
 
             var components     = Component.store('components');
             var filterComponet = Component.get('filter-item-componet', components);
-
-            console.log(filterComponet);
 
             if (!Array.isArray(items)) {
                 throw new Error('Something has went wrong with rendering category items.');
@@ -948,7 +1036,6 @@
 
             return elem.appendChild(fragments);
         };
-
 
         var article = function (item, elem) {
 
@@ -1296,7 +1383,11 @@
 
                 var Items = !data ? results : data;
 
-                if (!Items || !Array.isArray(Items)) {
+                if (!Items) {
+                    return console.warn('No search results to filter');
+                }
+
+                if (!Array.isArray(Items)) {
                     throw new Error('Search data must be an array to filter');
                 }
 
@@ -1327,6 +1418,7 @@
             template: template,
             search: search,
             filters: filters,
+            subcategories: subcategories,
         };
 
     }();
@@ -1455,7 +1547,7 @@
                 Render.categories(res);
 
                 var url = Parse.url(win.location.href, true);
-                if (url && url.name == 'category') { return; }
+                if (url && ['category', 'subcategory'].indexOf(url.name) !== -1) { return; }
 
                 Get.popular({ limitno: 5 }, function (res) {
                     var elem  = el('[data-top-knowledge-list]', Wrapper);
@@ -1517,7 +1609,10 @@
         var path = doc.location.hash;
 
         var url = Parse.url(path, true);
-        if (!url) { Container('questions'); }
+        if (!url) { 
+            Container('questions');
+            Container('category', el('[data-slide*="category"]', Wrapper));
+        }
     });
 
 }(document, window, synthetix));
