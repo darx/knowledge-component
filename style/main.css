@@ -288,6 +288,10 @@
     height: 100%;
 }
 
+.synthetix-iso .knowledge-body {
+    padding: 1em 0;
+}
+
 /*
 
     Category
@@ -764,9 +768,9 @@
     resize: vertical;
     max-height: 33em;
     font-size: 1.24em;
+    border: .2em solid;
     padding: .4em .6em;
     border-radius: .3em;
-    border: .2em solid;
 }
 
 .synthetix-iso .sx_knowledge_article_feedback label input {

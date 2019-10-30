@@ -20,10 +20,6 @@
             : elem;
 
         if (Container) {
-            one(Container, 'transitionend', function () {
-
-            });
-
             Container.dataset.slide = state;
         }
     }
@@ -436,13 +432,17 @@
 
                         value = [decodeURIComponent(parsed[1]), decodeURIComponent(parsed[2])]
 
+                        Container = el('[data-subcategories-container]', Wrapper);
+                        var Sub = el('[data-subcategory="' + value[1] + '"]', Container);
+
                         if (catPlaceholder.innerText.replace(/"/g, '') != value[1]) {
+
                             params.category = value[0];
                             params.subcategory = value[1];
                             
                             catPlaceholder.innerText = '"' + value[1] + '"';
 
-                            Cat.dataset.active = 'true';
+                            Sub.dataset.active = 'true';
                             State.dataset.slide = 'subcategory';
                         }
 
@@ -627,6 +627,10 @@
 
         var style = function (str, id) {
 
+            /**
+             * @name Parse.style
+             **/
+
             if (!('string' !== typeof str || !Array.isArray(str))) {
                 throw new Error('The `str` @param must be a string or an array');
             }
@@ -639,7 +643,40 @@
             return s;
         };
 
-        return { url: url, component: component, text: text, results: results, feedback: feedback, style: style, form: form };
+        var article = function (str) {
+
+            /**
+             * @name Parse.article
+             **/
+
+            var Frag       = Component.transform(str),
+                components = Component.store('components');
+
+            // list of html selectors i.e. h1,p,a,string
+            var Selectors = Component.get('selectors-componet', components);
+
+            // getElementsByTagName doesn't work DocumentFragment
+            var elems = Frag.querySelectorAll(Selectors);
+            [].forEach.call(elems, function (elem) {
+
+                // removing white space
+                if (elem.innerHTML.trim() == '&nbsp;') {
+                    elem.remove();
+                }
+
+                if (elem.href && elem.href.indexOf('synthetix:') !== -1) {
+                    var start = '#!/synthetix/knowledge/component/article/',
+                        label = elem.href.split(/:/)[1],
+                        text  = Parse.text(elem.innerText, '-');
+ 
+                    elem.href = start + label + '/' + text;
+                }
+            });
+
+            return Frag;
+        };
+
+        return { url: url, component: component, text: text, results: results, feedback: feedback, style: style, form: form, article: article };
 
     }();
 
@@ -1067,7 +1104,7 @@
                 }]
             );
 
-            var frag = Component.transform(html);
+            var frag = Parse.article(html);
 
             fragment.appendChild(frag);
 
@@ -1572,24 +1609,6 @@
         }
         return (context || document).querySelector(sel);
     }
-
-    function one (el, type, handler) {
-        var handle = {};
-        var handler = handler;
-
-        var _handler = function () {
-            off(el, type, _handler);
-            handler.apply(this, arguments);
-        };
-
-        on(el, type, _handler);
-
-        handle.cancel = function () {
-            off(el, type, _handler);
-        };
-
-        return handle;
-    };
 
     function on (el, type, handler) {
         el.addEventListener(type, handler);
