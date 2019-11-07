@@ -388,6 +388,9 @@
 
                     Get.article(value, function (res) {
                         if (!Component.store('feedback')) {
+                            on(el('[data-navigation-back]', Wrapper), 'click', function () {
+                                win.history.back();
+                            });
                             Component.store({ feedback: Parse.feedback(res.newfeedback) });
                         }
 
@@ -440,7 +443,7 @@
                             params.category = value[0];
                             params.subcategory = value[1];
                             
-                            catPlaceholder.innerText = '"' + value[1] + '"';
+                            catPlaceholder.innerText = value[1];
 
                             Sub.dataset.active = 'true';
                             State.dataset.slide = 'subcategory';
@@ -454,7 +457,7 @@
 
                     else if (catPlaceholder.innerText.replace(/"/g, '') != value) {
                         params.category = value;
-                        catPlaceholder.innerText = '"' + value + '"';
+                        catPlaceholder.innerText = value;
                         Cat.dataset.active = 'true';
                     }
 
@@ -966,7 +969,7 @@
             var Heading = el('[data-subcategory-select]', Wrapper);
 
             if (Heading) {
-                Heading.innerText = '"' + category + '"';
+                Heading.innerText = category;
             }
 
             for (var i = 0, len = items.length; i < len; i++) {
@@ -1367,7 +1370,7 @@
 
                 var QueryPlaceholder = el('[data-knowledge-search-query]', Wrapper);
 
-                if ('string' === typeof Query) { QueryPlaceholder.innerText = '"' + Query + '"'; }
+                if ('string' === typeof Query) { QueryPlaceholder.innerText = Query; }
 
                 var Search = el('[data-search-state]', Wrapper);
 

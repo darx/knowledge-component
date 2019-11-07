@@ -75,6 +75,14 @@
 					<div class="knowledge-body__article">
 
 						<div class="article__navigation">
+							<button type="button" data-navigation-back>
+								<span class="sx_svg_icon">
+								    <svg>
+								        <use xlink:href="#sx_chevron-left_icon"></use>
+								    </svg>
+								</span>
+								Go back
+							</button>
 						</div>
 
 						<div class="article__content--wrapper" data-article-content>
@@ -90,7 +98,10 @@
 							data-form="knowledge-feedback">
 								<input type="hidden" name="label">
 								<fieldset></fieldset>
-								<button type="submit" name="submit">{{FeedbackSubmit}}</button>
+								<fieldset>
+									<button type="submit" name="submit">{{FeedbackSubmit}}</button>
+									<button type="button" syn-trigger="inknowledgelivechat">Live Chat</button>
+								</fieldset>
 							</form>
 
 						</div>
