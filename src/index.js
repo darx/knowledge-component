@@ -926,10 +926,10 @@
                 var html = Parse.component(
                     categoryComponent, [{
                         name: 'Name',
-                        value: item.displaytxt
+                        value: item.category.trim()
                     }, {
                         name: 'NameEncoded',
-                        value: encodeURIComponent(item.category)
+                        value: encodeURIComponent(item.category.trim())
                     }, {
                         name: 'NameClass',
                         value: Parse.text(item.category, '_')
@@ -941,7 +941,13 @@
                 
                 var frag = Component.transform(html);
 
-                if (item.subcategory && item.subcategory.length) {
+                console.log(html);
+
+                console.log(item.subcategory);
+                console.log(item.subcategory.length);
+                console.log(item.subcategory && item.subcategory.length);
+
+                if (item.subcategory && !!item.subcategory.length) {
                     el('[data-category]', frag).subcategories = item.subcategory;
                 }
 
@@ -1026,7 +1032,7 @@
                 var html = Parse.component(
                     filterComponet, [{
                         name: 'Name',
-                        value: item.displaytxt.trim()
+                        value: item.category.trim()
                     }, {
                         name: 'Category',
                         value: item.category
