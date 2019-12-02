@@ -297,6 +297,30 @@
     Category
 
 */
+.synthetix-iso [data-scroll="hide"] ~ [data-scroll-left],
+.synthetix-iso [data-scroll="hide"] ~ [data-scroll-right],
+.synthetix-iso [data-scroll="left"] ~ [data-scroll-left],
+.synthetix-iso [data-scroll="right"] ~ [data-scroll-right] {
+    display: none;
+}
+
+.synthetix-iso .knowledge-categories-grid--wrapper [data-scroll-left],
+.synthetix-iso .knowledge-categories-grid--wrapper [data-scroll-right] {
+    top: 50%;
+    width: 5em;
+    z-index: 90;
+    height: 8em;
+    position: absolute;
+    transform: translate(0, -30%);
+}
+
+.synthetix-iso .knowledge-categories-grid--wrapper [data-scroll-left] {
+    left: 0;
+}
+
+.synthetix-iso .knowledge-categories-grid--wrapper [data-scroll-right] {
+    right: 0;
+}
 
 .synthetix-iso .knowledge-categories-grid {
     display: flex;
@@ -413,6 +437,10 @@
 .synthetix-iso [data-slide="subcategory"] .knowledge-body__container-item--category,
 .synthetix-iso [data-slide="category"] .knowledge-body__container-item--subcategory {
     height: 0;
+}
+
+.synthetix-iso .knowledge-body__container-item--subcategory [data-subcategories-container] {
+    overflow: hidden;
 }
 
 
@@ -714,7 +742,8 @@
     will-change: display, transform;
 }
 
-.synthetix-iso .article__navigation button {
+.synthetix-iso .article__navigation button,
+.synthetix-iso .category__navigation button {
     border: 0;
     display: flex;
     font-size: 1.24em;
@@ -724,7 +753,8 @@
     background-color: transparent;
 }
 
-.synthetix-iso .article__navigation button .sx_svg_icon {
+.synthetix-iso .article__navigation button .sx_svg_icon,
+.synthetix-iso .category__navigation button .sx_svg_icon {
     width: 1.24em;
     height: 1.24em;
     flex: 0 0 auto;
@@ -734,7 +764,9 @@
 
 
 .synthetix-iso .article__navigation button:hover .sx_svg_icon,
-.synthetix-iso .article__navigation button:focus .sx_svg_icon {
+.synthetix-iso .article__navigation button:focus .sx_svg_icon,
+.synthetix-iso .category__navigation button:hover .sx_svg_icon,
+.synthetix-iso .category__navigation button:focus .sx_svg_icon {
     transform: translate(-.3em, 0);
 }
 

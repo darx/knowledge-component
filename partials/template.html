@@ -35,10 +35,40 @@
 							<div class="knowledge-body__container-item--category">
 								<h2 class="knowledge-categories__title">{{HeadingCategory}}</h2>
 								
-								<div class="knowledge-categories-grid" data-knowledge-categories></div>
+								<div class="knowledge-categories-grid--wrapper">
+									<div class="knowledge-categories-grid" data-knowledge-categories data-scroll="left"></div>
+									
+									<button type="button" data-scroll-left>
+										<span class="sx_svg_icon">
+										    <svg>
+										        <use xlink:href="#sx_chevron-left_icon"></use>
+										    </svg>
+										</span>
+									</button>
+
+									<button type="button" data-scroll-right>
+										<span class="sx_svg_icon">
+										    <svg>
+										        <use xlink:href="#sx_chevron-right_icon"></use>
+										    </svg>
+										</span>
+									</button>
+								</div>
+
 							</div>
 
 							<div class="knowledge-body__container-item--subcategory">
+								<div class="category__navigation">
+									<button type="button" data-navigation-back>
+										<span class="sx_svg_icon">
+										    <svg>
+										        <use xlink:href="#sx_chevron-left_icon"></use>
+										    </svg>
+										</span>
+										Go back
+									</button>
+								</div>
+
 								<h2 class="knowledge-categpries__tile">
 									Subcategories relating to <span data-subcategory-select></span> category
 								</h2>

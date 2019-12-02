@@ -242,6 +242,42 @@
 
         };
 
+        var scroll = function (elem, dir, speed, distance, step) {
+            var scrollAmount = 0;
+
+            var slideTimer = setInterval(function () {
+                if (dir == 'left'){
+                    elem.scrollLeft -= step;
+                }
+
+                else {
+                    elem.scrollLeft += step;
+                }
+
+                scrollAmount += step;
+
+                if (scrollAmount >= distance) {
+                    window.clearInterval(slideTimer);
+                }
+
+                if ((elem.scrollLeft + elem.offsetWidth) === elem.scrollWidth) {
+                    elem.dataset.scroll = 'right';
+                }
+
+                else if (elem.scrollLeft === 0) {
+                    elem.dataset.scroll = 'left';
+                }
+
+                else {
+                    elem.dataset.scroll = '';
+                }
+
+                if (elem.offsetWidth === elem.scrollWidth) {
+                    elem.dataset.scroll = 'hide';
+                }
+            }, speed);
+        };
+
         var get = function (sel, context) {
 
             /**
@@ -286,7 +322,8 @@
         return {
             get: get,
             transform: transform,
-            store: store
+            store: store,
+            scroll: scroll
         };
 
     }();
@@ -385,10 +422,10 @@
 
             switch (key) {
                 case 'article':
-
                     Get.article(value, function (res) {
                         if (!Component.store('feedback')) {
-                            on(el('[data-navigation-back]', Wrapper), 'click', function () {
+                            var btn = el('.article__navigation [data-navigation-back]', Wrapper);
+                            on(btn, 'click', function () {
                                 win.history.back();
                             });
                             Component.store({ feedback: Parse.feedback(res.newfeedback) });
@@ -429,7 +466,7 @@
                     if (Cat.subcategories) {
                         Render.subcategories(value, Cat.subcategories);
                         State.dataset.slide = 'subcategory';
-                    }
+                    } else { State.dataset.slide = 'category'; }
 
                     if (key == 'subcategory') {
 
@@ -466,8 +503,17 @@
                     }
 
                     Get.popular(params, function (res) {
-                        Render.popular(res.items,
-                            el('[data-top-knowledge-list]'), Wrapper);
+                        Render.popular(res.items, el('[data-top-knowledge-list]'), Wrapper);
+                    });
+
+                    var back = el('.category__navigation [data-navigation-back]', Wrapper);
+                    one(back, 'click', function () {
+                        win.location.hash = win.location.hash;
+                        Get.popular({ limitno: 5 }, function (res) {
+                            win.location.hash = '';
+                            catPlaceholder.innerText = '';
+                            Render.popular(res.items, el('[data-top-knowledge-list]'), Wrapper);
+                        });
                     });
                 break;
             }
@@ -941,12 +987,6 @@
                 
                 var frag = Component.transform(html);
 
-                console.log(html);
-
-                console.log(item.subcategory);
-                console.log(item.subcategory.length);
-                console.log(item.subcategory && item.subcategory.length);
-
                 if (item.subcategory && !!item.subcategory.length) {
                     el('[data-category]', frag).subcategories = item.subcategory;
                 }
@@ -954,7 +994,26 @@
                 fragments.appendChild(frag);
             }
 
-            return elem.appendChild(fragments);
+            var scroll = {
+                left: el('[data-scroll-left]', Wrapper),
+                right: el('[data-scroll-right]', Wrapper)
+            };
+            
+            on(elem, 'scroll', function () {
+                Component.scroll(elem, '', 0, 0, 0);
+            });
+
+            on(scroll.right, 'click', function () {
+                Component.scroll(elem, 'right', 25, 100, 10);
+            });
+
+            on(scroll.left, 'click', function () {
+                Component.scroll(elem, 'left', 25, 100, 10);
+            });
+
+            elem.appendChild(fragments);
+
+            Component.scroll(elem, '', 0, 0, 0);
         };
 
         var subcategories = function (category, items, elem) {
@@ -1625,6 +1684,24 @@
 
     function off (el, type, handler) {
         el.removeEventListener(type, handler);
+    }
+
+    function one (el, type, handler) {
+        var handle = {};
+        var handler = handler;
+
+        var _handler = function () {
+            off(el, type, _handler);
+            handler.apply(this, arguments);
+        };
+
+        on(el, type, _handler);
+
+        handle.cancel = function () {
+            off(el, type, _handler);
+        };
+
+        return handle;
     }
 
     function url (str) {
