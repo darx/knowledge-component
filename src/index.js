@@ -243,6 +243,11 @@
         };
 
         var scroll = function (elem, dir, speed, distance, step) {
+
+            /**
+             * @name Component.scroll
+             **/
+            
             var scrollAmount = 0;
 
             var slideTimer = setInterval(function () {
