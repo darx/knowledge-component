@@ -5,13 +5,14 @@
     }
 
     var Wrapper = undefined;
+    var Settings = syn();
 
     function Loading (state) {
         var Root = doc.documentElement;
         if (!state) {
-            return Root.removeClass('synthetix-loading');
+            return Root.classList.remove('synthetix-loading');
         }
-        Root.addClass('synthetix-loading');
+        Root.classList.add('synthetix-loading');
     }
 
     function Container (state, elem) {
@@ -36,12 +37,37 @@
 
             var params = {
                 method: 'GET',
-                url: syn.environment + 'external/categories',
+                url: Settings.environment + 'external/categories',
                 success: 'function' === typeof cb ? cb : console.log,
             };
 
             Request(params);
 
+        };
+
+        var trigger = function (Identifier, cb) {
+
+            /**
+             * @name Get.trigger
+             **/
+
+            var value = !isNaN(+('' + Identifier))
+                ? +Identifier
+                : Identifier;
+
+            var params = {
+                method: 'GET',
+                url: Settings.environment + 'external/trigger',
+                data: [ value ],
+            };
+
+            params.success = function (res) {
+                var trigger = data.triggers && data.triggers.length 
+                    ? data.triggers[0] : null;
+                cb(trigger);
+            };
+
+            Request(params);
         };
 
         var article = function (Label, cb) {
@@ -64,14 +90,14 @@
 
             var rqt = {
                 label: Label,
-                userid: Session,
+                userid: syn().session,
                 origin_url: url(),
                 channel: 14,
             };
 
             var params = {
                 method: 'POST',
-                url: syn.environment + 'external/article',
+                url: Settings.environment + 'external/article',
                 data: rqt,
                 headers: { 'Content-Type': 'application/json' },
                 success: function (res) {
@@ -102,7 +128,7 @@
 
             var params = {
                 method: 'POST',
-                url: syn.environment + 'external/search',
+                url: Settings.environment + 'external/search',
                 data: {
                     autosuggest: Suggest,
                     channel: 14,
@@ -110,7 +136,7 @@
                     index: 0,
                     origin_url: url(),
                     query: Query,
-                    userid: Session,
+                    userid: syn().session,
                     category: Topic,
                 },
                 headers: { 'Content-Type': 'application/json' },
@@ -119,9 +145,7 @@
                         cb(!res.results ? [] : res.results);
                     }
 
-                    else {
-                        console.log(res.results);
-                    }
+                    else { console.log(res.results); }
                 },
             };
 
@@ -159,7 +183,7 @@
 
             var params = {
                 method: 'GET',
-                url: syn.environment + 'external/all_faqs',
+                url: Settings.environment + 'external/all_faqs',
                 data: dataObject,
                 success: function (res) {
                     if ('function' === typeof cb) {
@@ -215,10 +239,11 @@
             article: article,
             popular: popular,
             resource: resource,
-            search: search
+            search: search,
+            trigger: trigger,
         };
 
-    }(syn.request, syn.session);
+    }(syn.request, Settings.session);
 
     var Component = function () {
 
@@ -294,7 +319,7 @@
             }
 
             var dom = (context || doc);
-            var elm = dom.getElementById(sel);
+            var elm = dom.querySelector('#' + sel);
             return !elm ? null : elm.innerHTML;
         };
 
@@ -438,6 +463,15 @@
 
                         catPlaceholder.innerText = '';
                         Render.article(Object.assign({}, res, { label: value }));
+
+                        if (syn.checkTriggers) {
+                            syn.checkTriggers({
+                                interval: false,
+                                synthetixWindow: false,
+                                inpage: true,
+                                global: true
+                            });
+                        }
                     });
                 break;
 
@@ -630,14 +664,14 @@
                 }
             });
 
+            var contains_file = el('[type="file"]', Form);
+
+            if (contains_file) { return new FormData(Form); }
+
             var params = {};
 
             for (var i = 0, len = Inputs.length; i < len; i++) {
                 var Input = Inputs[i];
-
-                if (!Input.value) { continue; }
-
-                Input.value = Input.value.trim();
 
                 var Arr = Input.name.split(/\[]/);
 
@@ -677,7 +711,7 @@
             }
 
             return params;
-        }
+        };
 
         var style = function (str, id) {
 
@@ -777,7 +811,7 @@
                 var searchFrag = Component.transform(
                     Parse.component(search, [{
                         name: 'SearchPlaceholder',
-                        value: 'Search our FAQs'
+                        value: 'Type your question here'
                     } ,{
                         name: 'FilterStatus',
                         value: 'Searching in:'
@@ -1535,7 +1569,7 @@
 
     var Send = function (Request) {
 
-        var feedback = function (dataObject, cb) {
+        var feedback = function (data, cb) {
 
             /**
              * @name Send.feedback
@@ -1543,13 +1577,30 @@
 
             var params = {
                 method: 'POST',
-                url: syn.environment + 'external/article_feedback',
-                data: dataObject,
-                headers: { 'Content-Type': 'application/json' },
+                url: Settings.environment + 'external/article_feedback',
+                data: data,
                 success: function (res) {
                     if ('function' === typeof cb) { cb(null, res); }
                 },
                 error: 'function' === typeof cb ? cb : console.log,
+            };
+
+            Request(params);
+
+        };
+
+        var trigger = function (data) {
+
+            /**
+             * @name Send.trigger
+             **/
+
+            var params = {
+                method: 'PUT',
+                url: Settings.environment + 'external/trigger',
+                data: data,
+                headers: { 'Content-Type': 'application/json' },
+                success: 'function' === typeof cb ? cb : console.log,
             };
 
             Request(params);
@@ -1625,7 +1676,7 @@
 
         }());
 
-        return { feedback: feedback, ga: ga, adobe: adobe };
+        return { feedback: feedback, ga: ga, adobe: adobe, trigger: trigger };
 
     }(syn.request);
 
@@ -1655,6 +1706,19 @@
             Get.categories(function (res) {
                 Render.filters(res);
                 Render.categories(res);
+
+                Get.trigger('inpageknowledge', function (data) {
+                    if (!data) { return false; }
+
+                    var params = {
+                        name: data.name,
+                        action: 'accept',
+                        channel: data.type,
+                        triggerid: data.id
+                    };
+
+                    Send.trigger(params);
+                });
 
                 var url = Parse.url(win.location.href, true);
                 if (url && ['category', 'subcategory'].indexOf(url.name) !== -1) { return; }

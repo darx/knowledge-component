@@ -307,10 +307,12 @@
 .synthetix-iso .knowledge-categories-grid--wrapper [data-scroll-left],
 .synthetix-iso .knowledge-categories-grid--wrapper [data-scroll-right] {
     top: 50%;
+    border: 0;
     width: 5em;
     z-index: 90;
     height: 8em;
     position: absolute;
+    background-color: transparent;
     transform: translate(0, -30%);
 }
 
@@ -421,6 +423,10 @@
     width: 100%;
     flex: 0 0 auto;
     will-change: display, transform;
+}
+
+.synthetix-iso [data-slide] .knowledge-body__container-item--subcategory {
+    overflow: hidden;
 }
 
 .synthetix-iso [data-slide="category"] .knowledge-body__container-item--category,
@@ -871,8 +877,7 @@
     display: none;
 }
 
-.synthetix-iso .article__feedback [data-manual-submit="true"] button[type="submit"],
-.synthetix-iso .article__feedback [data-manual-submit="true"] button[type="button"] {
+.synthetix-iso .article__feedback [data-manual-submit="true"] button[type="submit"] {
     display: inline-block;
 }
 
@@ -964,6 +969,62 @@
         height: 10em;
     }
 
+}
+
+
+.synthetix-iso .synthetix_trigger {
+    margin: 0 0 0 auto;
+}
+
+.synthetix-iso .sx_tr_wrapper {
+    display: inline-flex;
+    box-sizing: border-box;
+}
+
+.synthetix-iso .sx_tr_wrapper ul button.sx_tr_close {
+    display: none;
+}
+
+.synthetix-iso .sx_tr_main_launch .sx_svg_icon {
+    font-size: 1.24em;
+}
+
+.synthetix-iso .sx_tr_wrapper.sx_tr_inpage > ul.sx_tr_main > li.sx_tr_element {
+    padding: 0;
+    margin: 0;
+}
+
+.synthetix-iso .sx_tr_main_launch .sx_svg_icon {
+    width: .8em;
+    height: .8em;
+    display: block;
+    stroke-width: 0;
+    stroke: currentColor;
+    fill: currentColor;
+}
+
+.synthetix-iso .sx_tr_wrapper.sx_tr_inpage > ul > li.sx_tr_element[class] > button.sx_tr_launch {
+    font-weight: 500;
+    border-radius: 0;
+    padding: 16px 55px 19px 20px;
+}
+
+.synthetix-iso .sx_tr_wrapper > ul > li.sx_tr_element > button.sx_tr_launch > span.sx_label_text {
+    font-size: 1em;
+    font-weight: 500;
+    display: block;
+    font-family: inherit;
+}
+
+.synthetix-iso .sx_tr_wrapper ul button.sx_main_button .sx_svg_icon.sx_product_loading,
+.synthetix-iso button.sx_main_button.sx_tr_loading .sx_svg_icon:not(.sx_product_loading) {
+    display: none;
+}
+
+
+.synthetix-iso .sx_tr_wrapper ul button.sx_main_button.sx_tr_loading .sx_svg_icon.sx_product_loading {
+    display: block;
+    animation: sx_loading_rotating 1s infinite linear;
 }
 
 
