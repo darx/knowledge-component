@@ -55,12 +55,18 @@ gulp.task('partials', async () => {
 gulp.task('compress', () => {
     gulp.src('./src/index.js')
         .pipe(babel())
+        .pipe(rename({
+            basename: 'knowledge-component'
+        }))
         .pipe(gulp.dest('dist/src'));
 
     return gulp.src('./src/index.js')
         .pipe(babel())
         .pipe(uglify())
-        .pipe(rename({ suffix: '.min' }))
+        .pipe(rename({
+            basename: 'knowledge-component',
+            suffix: '.min'
+        }))
         .pipe(gulp.dest('dist/src'));
 });
 
@@ -130,7 +136,7 @@ gulp.task('styles', () => {
 gulp.task('compress-dev', () => {
     return gulp.src('./src/index.js')
         .pipe(babel())
-        .pipe(rename('knowledge-component.js'))
+        .pipe(rename({ basename: 'knowledge-component' }))
         .pipe(gulp.dest('dist/src'));
 });
 
