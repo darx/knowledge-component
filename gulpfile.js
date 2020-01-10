@@ -1,11 +1,11 @@
 const fs      = require('fs');
 const gulp    = require('gulp');
+const csso    = require('gulp-csso');
 const file    = require('gulp-file');
 const babel   = require('gulp-babel');
 const rename  = require('gulp-rename');
 const concat  = require('gulp-concat');
 const uglify  = require('gulp-uglify');
-const cssnano = require('gulp-cssnano');
 const htmlmin = require('gulp-htmlmin');
 const prefix  = require('gulp-autoprefixer');
 
@@ -125,9 +125,7 @@ gulp.task('styles', () => {
 
     return gulp.src('./style/*.css')
         .pipe(prefix())
-        .pipe(cssnano({
-            reduceIdents: false
-        }))
+        .pipe(csso())
         .pipe(rename({ suffix: '.min' }))
         .pipe(gulp.dest('dist/src'));
 });
