@@ -541,6 +541,7 @@
             };
 
             var text = (txt, char) => {
+
                 /**
                  * @name Parse.text
                  **/
@@ -585,6 +586,7 @@
             }();
 
             var feedback = (items) => {
+                
                 /**
                  * @name Parse.feedback
                  **/
@@ -1805,3 +1807,6 @@
     }
 
 }(document, window, synthetix));
+
+
+
