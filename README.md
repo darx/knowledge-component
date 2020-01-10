@@ -3,7 +3,7 @@ Dynamic embeddable Synthetix knowledge component
  
 ## Getting started
 ```
-git clone https://github.com/SynthetixLtd/knowledge-component.git
+git clone https://github.com/darx/knowledge-component.git
 cd knowledge-component
 npm install --save-dev
 ```
