@@ -4,12 +4,20 @@
   "description": "Dynamic embeddable Synthetix knowledge component",
   "main": "src/index.js",
   "scripts": {
-    "production": "gulp build",
+    "build": "gulp build-production",
     "development": "gulp build-development"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/darx/knowledge-component.git"
+  },
+  "babel": {
+    "presets": [
+      [
+        "@babel/preset-env"
+      ]
+    ],
+    "sourceType": "script"
   },
   "keywords": [
     "synthetix",
@@ -27,19 +35,22 @@
   },
   "homepage": "https://github.com/darx/knowledge-component#readme",
   "dependencies": {
-    "@babel/polyfill": "^7.6.0",
+    "@babel/polyfill": "^7.7.0"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.7.7",
+    "@babel/core": "^7.7.7",
+    "@babel/node": "^7.7.7",
+    "@babel/preset-env": "^7.7.7",
+    "@babel/register": "^7.7.7",
     "gulp": "^4.0.2",
-    "gulp-autoprefixer": "^7.0.0",
+    "gulp-autoprefixer": "^7.0.1",
+    "gulp-babel": "^8.0.0",
     "gulp-concat": "^2.6.1",
+    "gulp-cssnano": "^2.1.3",
     "gulp-file": "^0.4.0",
     "gulp-htmlmin": "^5.0.1",
     "gulp-rename": "^1.4.0",
-    "gulp-uglify": "^3.0.2",
-    "website-scraper": "^4.2.0"
-  },
-  "devDependencies": {
-    "@babel/cli": "^7.6.0",
-    "@babel/core": "^7.6.0",
-    "@babel/preset-env": "^7.6.0"
+    "gulp-uglify": "^3.0.2"
   }
 }
