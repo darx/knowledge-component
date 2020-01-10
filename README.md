@@ -7,6 +7,7 @@ git clone https://github.com/SynthetixLtd/knowledge-component.git
 cd knowledge-component
 npm install --save-dev
 ```
+
 ### Production Build
 
 Minification of HTML/CSS/JS
@@ -18,8 +19,9 @@ npm run build
 ### Install
 
 ```
-<script src="path/to/knowledge-component.js"></script>
+<script src="path/to/knowledge-component.min.js"></script>
 ```
+
 ### Initiating script
 
 ```
