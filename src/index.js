@@ -6,8 +6,8 @@
 
     var KnowledgeComponent = (function () {
 
-        var Wrapper = undefined;
-        var Settings = syn();
+        var Wrapper  = undefined,
+            Settings = syn();
 
         function Loading (state) {
             var Root = doc.documentElement;
@@ -1654,12 +1654,8 @@
 
         var ready = (fn) => {
 
-            if ('function' === typeof syn && syn().environment) {
-                if ('function' === typeof fn) { fn(true); }
-            }
-
             var __syn__new = syn.session.new;
-            syn.session.new = (data, cb) => {
+            syn.session.new = function (data, cb) {
                 __syn__new.apply(this, arguments);
 
                 if ('function' === typeof cb) {
@@ -1672,7 +1668,7 @@
             };
 
             var __syn__get = syn.session.get;
-            syn.session.get = (data, __cb) => {
+            syn.session.get = function (data, __cb) {
                 __syn__get.apply(this, arguments);
 
                 if ('function' === typeof __cb) {
@@ -1693,9 +1689,8 @@
                 return console.warn('Unable to find `.synthetix-iso` wrapper elemenet.');
             }
 
-            console.log('testtesttest')
-
             Wrapper = wrapper;
+            Settings = syn();
 
             Render.styles();
 
