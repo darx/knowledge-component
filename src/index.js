@@ -211,21 +211,26 @@
 
             };
 
-            var SynthetixRequest = Request;
-            Request = (options) => {
-                if ('function' === typeof options.success) {
-                    Loading(true);
+            Request = (function () {
+                var SynthetixRequest = Request;
 
-                    var Response = options.success;
-                    options.success = () => {
-                        // posible GA event to be sent here
-                        Loading(false);
-                        return Response.apply(null, arguments);
+                return function (options) {
+
+                    if ('function' === typeof options.success) {
+                        Loading(true);
+
+                        var Response = options.success;
+                        options.success = function (res) {
+                            // posible GA event to be sent here
+                            Loading(false);
+                            return Response.apply(this, arguments);
+                        }
                     }
+
+                    SynthetixRequest.apply(this, arguments);
+
                 }
-                
-                return SynthetixRequest.apply(null, arguments);
-            };
+            })();
 
             return { categories, article, popular, resource, search, trigger };
 
@@ -437,7 +442,9 @@
                         Get.article(value, (res) => {
                             if (!Component.store('feedback')) {
                                 var btn = el('.article__navigation [data-navigation-back]', Wrapper);
-                                on(btn, 'click', win.history.back);
+                                on(btn, 'click', () => {
+                                    win.history.back();
+                                });
                                 Component.store({ feedback: Parse.feedback(res.newfeedback) });
                             }
 
@@ -586,7 +593,7 @@
             }();
 
             var feedback = (items) => {
-                
+
                 /**
                  * @name Parse.feedback
                  **/
@@ -720,10 +727,10 @@
                  **/
 
                 var Frag       = Component.transform(str),
-                    components = Component.store('components');
+                    Components = Component.store('components');
 
                 // list of html selectors i.e. h1,p,a,string
-                var Selectors = Component.get('selectors-componet', components);
+                var Selectors = Component.get('selectors-componet', Components);
 
                 // getElementsByTagName doesn't work DocumentFragment
                 var elems = Frag.querySelectorAll(Selectors);
@@ -761,9 +768,9 @@
                      **/
 
                     var fragment   = doc.createDocumentFragment(),
-                        components = Component.store('components');
+                        Components = Component.store('components');
 
-                    var categoryWrapper     = Component.get('category-wrapper-componet', components);
+                    var categoryWrapper     = Component.get('category-wrapper-componet', Components);
                     var categoryWrapperFrag = Component.transform(
                         Parse.component(categoryWrapper, [{
                             name: 'Heading',
@@ -786,10 +793,10 @@
                      * @name Render.placeholder.search
                      **/
 
-                    var fragment   = doc.createDocumentFragment(),
-                        components = Component.store('components');
+                    var Fragment   = doc.createDocumentFragment(),
+                        Components = Component.store('components');
 
-                    var search     = Component.get('search-template-componet', components);
+                    var search     = Component.get('search-template-componet', Components);
                     var searchFrag = Component.transform(
                         Parse.component(search, [{
                             name: 'SearchPlaceholder',
@@ -878,13 +885,13 @@
                                 : '';
                     });
 
-                    fragment.appendChild(searchFrag);
+                    Fragment.appendChild(searchFrag);
 
                     if (elem instanceof Element) {
-                        return elem.appendChild(fragment);
+                        return elem.appendChild(Fragment);
                     }
 
-                    return fragment;
+                    return Fragment;
                 };
 
                 var article = (elem) => {
@@ -893,10 +900,10 @@
                      * @name Render.placeholder.article
                      **/
 
-                    var fragment   = doc.createDocumentFragment(),
-                        components = Component.store('components');
+                    var Fragment   = doc.createDocumentFragment(),
+                        Components = Component.store('components');
 
-                    var articleListWrapper     = Component.get('article-list-wrapper-componet', components);
+                    var articleListWrapper     = Component.get('article-list-wrapper-componet', Components);
                     var articleListWrapperFrag = Component.transform(
                         Parse.component(articleListWrapper, [{
                             name: 'Heading',
@@ -904,13 +911,13 @@
                         }])
                     );
 
-                    fragment.appendChild(articleListWrapperFrag);
+                    Fragment.appendChild(articleListWrapperFrag);
 
                     if (elem instanceof Element) {
-                        return elem.appendChild(fragment);
+                        return elem.appendChild(Fragment);
                     }
 
-                    return fragment;
+                    return Fragment;
                 };
 
                 return { category, search, article };
@@ -919,30 +926,30 @@
 
             var template = (elem) => {
 
-                var fragment   = doc.createDocumentFragment(),
-                    components = Component.store('components');
+                var Fragment   = doc.createDocumentFragment(),
+                    Components = Component.store('components');
 
-                var template     = Component.get('template-componet', components);
-                var templateFrag = Component.transform(
-                    Parse.component(template, [{
-                        name: 'HeadingCategory',
-                        value: 'Categories'
-                    }, {
-                        name: 'HeadingSearch',
-                        value: 'Search results for '
-                    }, {
-                        name: 'FeedbackSubmit',
-                        value: 'Send feedback'
-                    }])
-                );
+                var params = [{
+                    name: 'HeadingCategory',
+                    value: 'Categories'
+                }, {
+                    name: 'HeadingSearch',
+                    value: 'Search results for '
+                }, {
+                    name: 'FeedbackSubmit',
+                    value: 'Send feedback'
+                }];
 
-                fragment.appendChild(templateFrag);
+                var Template     = Component.get('template-componet', Components),
+                    TemplateFrag = Component.transform(Parse.component(Template, params));
+
+                Fragment.appendChild(TemplateFrag);
 
                 if (elem instanceof Element) {
-                    return elem.appendChild(fragment);
+                    return elem.appendChild(Fragment);
                 }
 
-                return fragment;
+                return Fragment;
             };
 
             var styles = () => {
@@ -972,8 +979,8 @@
                  * @name Render.categories
                  **/
 
-                var components        = Component.store('components');
-                var categoryComponent = Component.get('category-componet', components);
+                var Components        = Component.store('components'),
+                    CategoryComponent = Component.get('category-componet', Components);
 
                 if (!Array.isArray(items)) {
                     throw new Error('Something has went wrong with rendering category items.');
@@ -983,36 +990,35 @@
                     elem = el('[data-knowledge-categories]', Wrapper);
                 }
 
-                var fragments = doc.createDocumentFragment();
+                var Fragments = doc.createDocumentFragment();
 
                 for (var i = 0, len = items.length; i < len; i++) {
-                    var item = items[i];
+                    var Item = items[i];
 
-                    if (!item.displaytxt) { continue; }
+                    if (!Item.displaytxt) { continue; }
 
-                    var html = Parse.component(
-                        categoryComponent, [{
-                            name: 'Name',
-                            value: item.category.trim()
-                        }, {
-                            name: 'NameEncoded',
-                            value: encodeURIComponent(item.category.trim())
-                        }, {
-                            name: 'NameClass',
-                            value: Parse.text(item.category, '_')
-                        }, {
-                            name: 'ImageURL',
-                            value: item.imageurl
-                        }]
-                    );
-                    
-                    var frag = Component.transform(html);
+                    var params = [{
+                        name: 'Name',
+                        value: Item.category.trim()
+                    }, {
+                        name: 'NameEncoded',
+                        value: encodeURIComponent(Item.category.trim())
+                    }, {
+                        name: 'NameClass',
+                        value: Parse.text(Item.category, '_')
+                    }, {
+                        name: 'ImageURL',
+                        value: Item.imageurl
+                    }];
 
-                    if (item.subcategory && !!item.subcategory.length) {
-                        el('[data-category]', frag).subcategories = item.subcategory;
+                    var html = Parse.component(CategoryComponent, params),
+                        frag = Component.transform(html);
+
+                    if (Item.subcategory && !!Item.subcategory.length) {
+                        el('[data-category]', frag).subcategories = Item.subcategory;
                     }
 
-                    fragments.appendChild(frag);
+                    Fragments.appendChild(frag);
                 }
 
                 var scroll = {
@@ -1032,7 +1038,7 @@
                     Component.scroll(elem, 'left', 25, 100, 10);
                 });
 
-                elem.appendChild(fragments);
+                elem.appendChild(Fragments);
 
                 Component.scroll(elem, '', 0, 0, 0);
             };
@@ -1043,14 +1049,14 @@
                  * @name Render.subcategories
                  **/
 
-                var components        = Component.store('components');
-                var categoryComponent = Component.get('subcategory-componet', components);
+                var Components        = Component.store('components');
+                var CategoryComponent = Component.get('subcategory-componet', Components);
                 
                 if (!(elem instanceof Element)) { 
                     elem = el('[data-subcategories-container]', Wrapper);
                 }
 
-                var fragments = doc.createDocumentFragment();
+                var Fragments = doc.createDocumentFragment();
 
                 var Heading = el('[data-subcategory-select]', Wrapper);
 
@@ -1059,28 +1065,29 @@
                 }
 
                 for (var i = 0, len = items.length; i < len; i++) {
-                    var item = items[i];
+                    var Item = items[i];
 
-                    var html = Parse.component(
-                        categoryComponent, [{
-                            name: 'Name',
-                            value: item.category
-                        }, {
-                            name: 'NameEncoded',
-                            value: encodeURIComponent(category) + '/' + encodeURIComponent(item.category)
-                        }, {
-                            name: 'NameClass',
-                            value: Parse.text(item.category, '_')
-                        }]
-                    );
+                    var params = [{
+                        name: 'Name',
+                        value: Item.category
+                    }, {
+                        name: 'NameEncoded',
+                        value: encodeURIComponent(category) 
+                            + '/' 
+                            + encodeURIComponent(Item.category)
+                    }, {
+                        name: 'NameClass',
+                        value: Parse.text(Item.category, '_')
+                    }]
 
-                    var frag = Component.transform(html);
+                    var html = Parse.component(CategoryComponent, params),
+                        frag = Component.transform(html);
 
-                    fragments.appendChild(frag);
+                    Fragments.appendChild(frag);
                 }
 
                 elem.innerHTML = '';
-                return elem.appendChild(fragments);
+                return elem.appendChild(Fragments);
             };
 
             var filters = (items, elem) => {
@@ -1089,8 +1096,8 @@
                  * @name Render.filters
                  **/
 
-                var components     = Component.store('components');
-                var filterComponet = Component.get('filter-item-componet', components);
+                var Components     = Component.store('components');
+                var FilterComponet = Component.get('filter-item-componet', Components);
 
                 if (!Array.isArray(items)) {
                     throw new Error('Something has went wrong with rendering category items.');
@@ -1100,26 +1107,25 @@
                     elem = el('[data-knowledge-filters]', Wrapper);
                 }
 
-                var fragments  = doc.createDocumentFragment();
+                var Fragments  = doc.createDocumentFragment();
 
-                var filterItem = Component.get('filter-list-item-componet', components);
+                var FilterItem = Component.get('filter-list-item-componet', Components);
 
                 for (var i = 0, len = items.length; i < len; i++) {
-                    var item = items[i];
+                    var Item = items[i];
 
-                    if (!item.displaytxt) { continue; }
+                    if (!Item.displaytxt) { continue; }
 
-                    var html = Parse.component(
-                        filterComponet, [{
-                            name: 'Name',
-                            value: item.category.trim()
-                        }, {
-                            name: 'Category',
-                            value: item.category
-                        }]
-                    );
-                    
-                    var frag = Component.transform(html);
+                    var params = [{
+                        name: 'Name',
+                        value: Item.category.trim()
+                    }, {
+                        name: 'Category',
+                        value: Item.category
+                    }];
+
+                    var html = Parse.component(FilterComponet, params),
+                        frag = Component.transform(html);
 
                     on(el('input', frag), 'change', function () {
                         var wrapper = el('[data-filter-list]', Wrapper);
@@ -1134,16 +1140,15 @@
                         Label.dataset.active = State;
 
                         if (!State){
-                            var name = Item.value;
-                            var sel  = '[data-filter-active="' + name + '"]';
-                            var elem = el(sel, Wrapper);
+                            var sel  = `[data-filter-active="${Item.value}"]`,
+                                elem = el(sel, Wrapper);
 
                             wrapper.removeChild(elem);
                         }
 
                         else {
                             var html = Parse.component(
-                                filterItem, [{ name: 'Name', value: Name }]
+                                FilterItem, [{ name: 'Name', value: Name }]
                             );
                             
                             var frag = Component.transform(html);
@@ -1157,10 +1162,10 @@
                         Render.search(Render.search.filter(), null, null, true);
                     });
 
-                    fragments.appendChild(frag);
+                    Fragments.appendChild(frag);
                 }
 
-                return elem.appendChild(fragments);
+                return elem.appendChild(Fragments);
             };
 
             var article = (item, elem) => {
@@ -1169,8 +1174,8 @@
                  * @name Render.article
                  **/
 
-                var components       = Component.store('components'),
-                    articleComponent = Component.get('article-content-componet', components);
+                var Components       = Component.store('components'),
+                    ArticleComponent = Component.get('article-content-componet', Components);
 
                 Render.feedback(null, null, item.label);
 
@@ -1180,20 +1185,19 @@
 
                 var fragment = doc.createDocumentFragment();
 
-                var html = Parse.component(
-                    articleComponent, [{
-                        name: 'ArticlePlaceholder',
-                        value: 'Your selected question'
-                    }, {
-                        name: 'ArticleHeading',
-                        value: item.question
-                    }, {
-                        name: 'ArticleContent',
-                        value: item.answer
-                    }]
-                );
+                var params = [{
+                    name: 'ArticlePlaceholder',
+                    value: 'Your selected question'
+                }, {
+                    name: 'ArticleHeading',
+                    value: item.question
+                }, {
+                    name: 'ArticleContent',
+                    value: item.answer
+                }];
 
-                var frag = Parse.article(html);
+                var html = Parse.component(ArticleComponent, params),
+                    frag = Parse.article(html);
 
                 fragment.appendChild(frag);
 
@@ -1211,11 +1215,11 @@
                  * @name Render.feedback
                  **/
 
-                var components      = Component.store('components'),
-                    feedbackWrapper = Component.get('feedback-item-wrapper-componet', components);
+                var Components      = Component.store('components'),
+                    FeedbackWrapper = Component.get('feedback-item-wrapper-componet', Components);
 
-                var feedbackChoice  = Component.get('feedback-item-choice-componet', components);
-                var feedbackText    = Component.get('feedback-item-text-componet', components);
+                var FeedbackChoice  = Component.get('feedback-item-choice-componet', Components);
+                var FeedbackText    = Component.get('feedback-item-text-componet', Components);
 
                 elem = !elem ? el('[data-feedback] form', Wrapper) : elem;
 
@@ -1270,7 +1274,7 @@
                 for (var i = 0, len = items.length; i < len; i++) {
                     var Item = items[i];
 
-                    var html = Parse.component(feedbackWrapper, [{
+                    var html = Parse.component(FeedbackWrapper, [{
                         name: 'Question',
                         value: Item.question
                     }, {
@@ -1297,7 +1301,7 @@
                                 options.push({ name: 'Type', value: index === 0 ? 'up' : 'down' });
                             }
 
-                            var htmlc = Parse.component(feedbackChoice, options);
+                            var htmlc = Parse.component(FeedbackChoice, options);
 
                             var choice = Component.transform(htmlc);
 
@@ -1347,7 +1351,7 @@
                     }
 
                     else {
-                        var htmlt = Parse.component(feedbackText, [{
+                        var params = [{
                             name: 'Index',
                             value: Item.index
                         }, {
@@ -1356,7 +1360,9 @@
                         }, {
                             name: 'Value',
                             value: Item.answers[0].name
-                        }]);
+                        }];
+
+                        var htmlt = Parse.component(FeedbackText, params);
 
                         var text = Component.transform(htmlt);
                         el('.sx_form_group', wrap).appendChild(text);
@@ -1365,7 +1371,7 @@
                     fragment.appendChild(wrap);
                 }
 
-                var htmls = Parse.component(feedbackWrapper, [{
+                var htmls = Parse.component(FeedbackWrapper, [{
                     name: 'Question',
                     value: 'Thank you for your feedback'
                 }, {
@@ -1387,37 +1393,36 @@
                  * @name Render.popular
                  **/
 
-                var components               = Component.store('components');
-                var articleListItemComponent = Component.get('article-list-item-componet', components);
+                var Components               = Component.store('components'),
+                    ArticleListItemComponent = Component.get('article-list-item-componet', Components);
 
-                var fragments = doc.createDocumentFragment();
+                var Fragments = doc.createDocumentFragment();
 
                 for (var i = 0, len = items.length; i < len; i++) {
                     var Item = items[i];
 
-                    var html = Parse.component(
-                        articleListItemComponent, [{
-                            name: 'Label',
-                            value: Item.label
-                        }, {
-                            name: 'Question',
-                            value: Item.question
-                        }, {
-                            name: 'QuestionEncoded',
-                            value: Parse.text(Item.question, '-')
-                        }, {
-                            name: 'Category',
-                            value: Item.category
-                        }]
-                    );
+                    var params = [{
+                        name: 'Label',
+                        value: Item.label
+                    }, {
+                        name: 'Question',
+                        value: Item.question
+                    }, {
+                        name: 'QuestionEncoded',
+                        value: Parse.text(Item.question, '-')
+                    }, {
+                        name: 'Category',
+                        value: Item.category
+                    }];
 
-                    var frag = Component.transform(html);
+                    var html = Parse.component(ArticleListItemComponent, params),
+                        frag = Component.transform(html);
 
-                    fragments.appendChild(frag);
+                    Fragments.appendChild(frag);
                 }
 
                 elem.innerHTML = '';
-                elem.appendChild(fragments);
+                elem.appendChild(Fragments);
 
                 var url = Parse.url(win.location.href, false);
                 if (url && url.name != 'article') {
@@ -1437,10 +1442,10 @@
                      * @name Render.search
                      **/
 
-                    var components               = Component.store('components');
-                    var articleListItemComponent = Component.get('article-list-item-componet', components);
+                    var Components               = Component.store('components'),
+                        ArticleListItemComponent = Component.get('article-list-item-componet', Components);
 
-                    var fragments = doc.createDocumentFragment();
+                    var Fragments = doc.createDocumentFragment();
 
                     if (!(elem instanceof Element)) {
                         elem = el('[data-search-results]', Wrapper);
@@ -1470,29 +1475,28 @@
                     for (var i = 0, len = items.length; i < len; i++) {
                         var Item = items[i];
 
-                        var html = Parse.component(
-                            articleListItemComponent, [{
-                                name: 'Label',
-                                value: Item.label
-                            }, {
-                                name: 'Question',
-                                value: Item.faq
-                            }, {
-                                name: 'QuestionEncoded',
-                                value: Parse.text(Item.faq, '-')
-                            }, {
-                                name: 'Category',
-                                value: Item.taxonomy.category[0]
-                            }]
-                        );
+                        var params = [{
+                            name: 'Label',
+                            value: Item.label
+                        }, {
+                            name: 'Question',
+                            value: Item.faq
+                        }, {
+                            name: 'QuestionEncoded',
+                            value: Parse.text(Item.faq, '-')
+                        }, {
+                            name: 'Category',
+                            value: Item.taxonomy.category[0]
+                        }];
 
-                        var frag = Component.transform(html);
+                        var html = Parse.component(ArticleListItemComponent, params),
+                            frag = Component.transform(html);
 
-                        fragments.appendChild(frag);
+                        Fragments.appendChild(frag);
                     }
 
                     elem.innerHTML = '';
-                    elem.appendChild(fragments);
+                    elem.appendChild(Fragments);
 
                     return Container('questions');
                 }
@@ -1650,7 +1654,11 @@
 
         var ready = (fn) => {
 
-            var __syn__new = synthetix.session.new;
+            if ('function' === typeof syn && syn().environment) {
+                if ('function' === typeof fn) { fn(true); }
+            }
+
+            var __syn__new = syn.session.new;
             syn.session.new = (data, cb) => {
                 __syn__new.apply(this, arguments);
 
@@ -1684,6 +1692,8 @@
             if (!wrapper) {
                 return console.warn('Unable to find `.synthetix-iso` wrapper elemenet.');
             }
+
+            console.log('testtesttest')
 
             Wrapper = wrapper;
 
@@ -1807,6 +1817,3 @@
     }
 
 }(document, window, synthetix));
-
-
-
