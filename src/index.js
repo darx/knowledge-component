@@ -116,7 +116,7 @@
                  **/
 
                 if ('string' !== typeof Query) {
-                    throw new Error();
+                    throw new Error('Search `Query` @param must be a string not ' + typeof Query);
                 }
 
                 if ('boolean' !== typeof Suggest) { suggest = true; }
@@ -356,11 +356,11 @@
                 var $string = str;
 
                 if ('string' !== typeof $string) {
-                    throw new Error();
+                    throw new Error('');
                 }
 
                 if (!Array.isArray(array)) {
-                    throw new Error();
+                    throw new Error('');
                 }
 
                 for (var i = 0, len = array.length; i < len; i++) {
@@ -387,7 +387,7 @@
                  **/
 
                 if ('string' !== typeof url) {
-                    throw new Error();
+                    throw new Error('');
                 }
 
                 var lookup = '#!/synthetix/knowledge/component/';
@@ -747,6 +747,10 @@
                             text  = Parse.text(elem.innerText, '-');
      
                         elem.href = start + label + '/' + text;
+                    }
+
+                    if (elem.src && elem.src.indexOf('http:') !== -1) {
+                        elem.src = elem.src.replace(/http:/, 'https:');
                     }
                 });
 

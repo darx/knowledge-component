@@ -297,6 +297,7 @@
     Category
 
 */
+
 .synthetix-iso [data-scroll="hide"] ~ [data-scroll-left],
 .synthetix-iso [data-scroll="hide"] ~ [data-scroll-right],
 .synthetix-iso [data-scroll="left"] ~ [data-scroll-left],
@@ -412,6 +413,7 @@
 .synthetix-iso .knowledge-categories {
     display: flex;
     flex-wrap: nowrap;
+    overflow-y: hidden;
     position: relative;
     overflow-x: hidden;
     flex-direction: row;
@@ -433,7 +435,6 @@
 .synthetix-iso [data-slide="category"] .knowledge-body__container-item--subcategory {
     transform: translate(0%, 0);
 }
-
 
 .synthetix-iso [data-slide="subcategory"] .knowledge-body__container-item--category,
 .synthetix-iso [data-slide="subcategory"] .knowledge-body__container-item--subcategory {
@@ -474,6 +475,21 @@
 
 .synthetix-iso .knowledge-header .knowledge-header__search-field-wrapper {
     margin: 0 auto;
+    position: relative;
+}
+
+.synthetix-iso .knowledge-header .knowledge-header__search-field-wrapper .sx_svg_icon {
+    top: 0;
+    right: 0;
+    display: none;
+    width: 2.24em;
+    height: 2.24em;
+    position: absolute;
+    transform: translate(-50%, 50%);
+}
+
+.synthetix-loading .synthetix-iso .knowledge-header .knowledge-header__search-field-wrapper .sx_svg_icon {
+    display: block;
 }
 
 .synthetix-iso .knowledge-header__search .filter-bar,
@@ -905,15 +921,6 @@
     border: 0;
 }
 
-/*
-  ______    ___     ____     __     ______  ______
- /_  __/   /   |   / __ )   / /    / ____/ /_  __/
-  / /     / /| |  / __  |  / /    / __/     / /   
- / /     / ___ | / /_/ /  / /___ / /___    / /    
-/_/     /_/  |_|/_____/  /_____//_____/   /_/     
-                                                  
-*/
-
 @media only screen and (max-width: 1024px) {
 
     .synthetix-iso .knowledge-header__search .filter-bar,
@@ -928,15 +935,6 @@
     }
 
 }
-
-/*
-    __  ___   ____     ____     ____    __     ______
-   /  |/  /  / __ \   / __ )   /  _/   / /    / ____/
-  / /|_/ /  / / / /  / __  |   / /    / /    / __/   
- / /  / /  / /_/ /  / /_/ /  _/ /    / /___ / /___   
-/_/  /_/   \____/  /_____/  /___/   /_____//_____/   
-                                                     
-*/
 
 @media only screen and (max-width: 650px) {
 
@@ -970,7 +968,6 @@
     }
 
 }
-
 
 .synthetix-iso .synthetix_trigger {
     margin: 0 0 0 auto;
@@ -1021,13 +1018,10 @@
     display: none;
 }
 
-
 .synthetix-iso .sx_tr_wrapper ul button.sx_main_button.sx_tr_loading .sx_svg_icon.sx_product_loading {
     display: block;
     animation: sx_loading_rotating 1s infinite linear;
 }
-
-
 
 .synthetix-iso:empty {
     border-radius: 50%;
@@ -1040,7 +1034,6 @@
     border-right: 6px solid #555;
     animation: sx_loading_rotating 1s linear .2s infinite;
 }
-
 
 @keyframes sx_loading_rotating {
     0% {
