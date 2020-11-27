@@ -1,83 +1,83 @@
 <section class="knowledge-header">
-    
-    <div class="knowledge-header__search" data-knowledge-search-actions>
-    
-        <div class="knowledge-header__search-field-wrapper">
-    
-            <form
-            action="./"
-            method="POST"
-            data-form="knowledge-header"
-            class="knowledge-header__search-form">
-    
-                <input 
-                required 
-                name="query" 
-                type="search"
-                autocapitalize="none"
-                title="{{SearchPlaceholder}}" 
-                placeholder="{{SearchPlaceholder}}" 
-                class="knowledge-header__search-field">
-                <button type="submit" name="submit"></button>
-    
-            </form>
+  
+  <div class="knowledge-header__search" data-knowledge-search-actions>
+  
+    <div class="knowledge-header__search-field-wrapper">
+  
+      <form
+      action="./"
+      method="POST"
+      data-form="knowledge-header"
+      class="knowledge-header__search-form">
+  
+        <input 
+        required 
+        name="query" 
+        type="search"
+        autocapitalize="none"
+        title="{{SearchPlaceholder}}" 
+        placeholder="{{SearchPlaceholder}}" 
+        class="knowledge-header__search-field">
+        <button type="submit" name="submit"></button>
+  
+      </form>
 
-            <span class="sx_svg_icon">
-                <svg>
-                    <use xlink:href="#sx_loading_icon"></use>
-                </svg>
-            </span>
-            
-        </div>
-    
-        <div class="filter-bar">
-    
-            <button 
-            type="button" 
-            class="filter-bar__menu-btn"
-            title="Click to show filter options">
-                <span class="sx_svg_icon">
-                    <svg>
-                        <use xlink:href="#sx_filter_icon"></use>
-                    </svg>
-                </span>
-            </button>
-    
-            <div class="filter-bar__curr-filters">
-    
-                <span class="filter-bar__curr-text">{{FilterStatus}}</span>
-    
-                <ul class="filter-bar__curr-filter-list" data-filter-list>
-    
-                    <li class="filter-bar__curr-filter--placeholder" data-filter-active="placeholder">
-                        <span class="filter-bar__curr-filter-txt">{{FilterPlaceholder}}</span>
-                    </li>
-    
-                </ul>
-    
-            </div>
-    
-        </div>
+      <span class="sx_svg_icon">
+        <svg>
+          <use xlink:href="#sx_loading_icon"></use>
+        </svg>
+      </span>
+      
+    </div>
+  
+    <div class="filter-bar">
+  
+      <button 
+      type="button" 
+      class="filter-bar__menu-btn"
+      title="Click to show filter options">
+        <span class="sx_svg_icon">
+          <svg>
+            <use xlink:href="#sx_filter_icon"></use>
+          </svg>
+        </span>
+      </button>
+  
+      <div class="filter-bar__curr-filters">
+  
+        <span class="filter-bar__curr-text">{{FilterStatus}}</span>
+  
+        <ul class="filter-bar__curr-filter-list" data-filter-list>
+  
+          <li class="filter-bar__curr-filter--placeholder" data-filter-active="placeholder">
+            <span class="filter-bar__curr-filter-txt">{{FilterPlaceholder}}</span>
+          </li>
+  
+        </ul>
+  
+      </div>
+  
+    </div>
 
-        <div class="filters-container">
+    <div class="filters-container">
+    
+      <div class="filters">
+    
+        <p class="filters__title">{{FilterTitle}}</p>
         
-            <div class="filters">
-        
-                <p class="filters__title">{{FilterTitle}}</p>
-                
-                <form 
-                action="./"
-                method="POST"
-                data-form="knowledge-filter"
-                class="filters-masonry-grid">
-        
-                    <div class="filters-masonry-grid__inner" data-knowledge-filters></div>
-            
-                </form>
-        
-            </div>
-        
-        </div>
+        <form 
+        action="./"
+        method="POST"
+        data-form="knowledge-filter"
+        class="filters-masonry-grid">
+    
+          <div class="filters-masonry-grid__inner" data-knowledge-filters></div>
+      
+        </form>
+    
+      </div>
     
     </div>
+  
+  </div>
 </section>

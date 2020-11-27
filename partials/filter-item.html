@@ -1,20 +1,20 @@
 <div class="filters-masonry-grid__tile">
-    <label 
-    tabindex="0"
-    role="button"
-    data-active="false"
-    class="sx_form_label_radio"
-    title="{{Name}} filter option"
-    for="sx_filter_{{Name}}"
-    class="filters-masonry-grid__tile-inner"
-    onkeyup="event.which !== 13 ? false : this.click()">
-        <input 
-        type="checkbox"
-        name="filter[]"
-        value="{{Category}}"
-        data-filter="{{Name}}"
-        id="sx_filter_{{Name}}">
+  <label 
+  tabindex="0"
+  role="button"
+  data-active="false"
+  class="sx_form_label_radio"
+  title="{{Name}} filter option"
+  for="sx_filter_{{Name}}"
+  class="filters-masonry-grid__tile-inner"
+  onkeyup="event.which !== 13 ? false : this.click()">
+    <input 
+    type="checkbox"
+    name="filter[]"
+    value="{{Category}}"
+    data-filter="{{Name}}"
+    id="sx_filter_{{Name}}">
 
-        <span id="sx_label_{{Category}}" class="sx_label_text">{{Name}}</span>
-    </label>
+    <span id="sx_label_{{Category}}" class="sx_label_text">{{Name}}</span>
+  </label>
 </div>
